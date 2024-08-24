@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  customer
+}
+
+model users {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String     @unique()
+  authId    String     @unique()
+  role      UserRole
+  companyId String?    @db.ObjectId
+  company   companies? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model companies {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String
+  phone       String
+  contactName String
+  contactRole String
+  cnpj        String       @unique()
+  users       users[]
+  vacancies   vacancies[]
+  candidates  candidates[]
+  interviews  interviews[]
+}
+
+enum VacancyStatus {
+  open
+  canceled
+  finished
+}
+
+enum VacancyLevel {
+  junior
+  pleno
+  senior
+  notApplicable
+}
+
+model vacancies {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  level       VacancyLevel
+  minSalary   Float
+  maxSalary   Float
+  commission  Float
+  status      VacancyStatus
+  companyId   String        @db.ObjectId
+  company     companies     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidates  candidates[]
+  interviews  interviews[]
+}
+
+enum CandidateStatus {
+  applied
+  approvedForInterview
+  rejectedForInterview
+  rejectedByRecruiter
+  approvedByRecruiter
+  rejectedByCompany
+  hired
+}
+
+model candidates {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  email          String
+  phone          String
+  linkedin       String
+  resume         String
+  salaryExpected Float
+  status         CandidateStatus
+  companyId      String          @db.ObjectId
+  company        companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vacancyId      String          @db.ObjectId
+  vacancy        vacancies       @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  interviews     interviews[]
+}
+
+enum InterviewType {
+  recruiter
+  company
+}
+
+enum InterviewStatus {
+  scheduled
+  canceled
+  approved
+  rejected
+}
+
+model interviews {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  date        DateTime
+  details     String
+  type        InterviewType
+  status      InterviewStatus
+  companyId   String          @db.ObjectId
+  company     companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidateId String          @db.ObjectId
+  candidate   candidates      @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  vacancyId   String          @db.ObjectId
+  vacancy     vacancies       @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, vacancyId, type])
+}
