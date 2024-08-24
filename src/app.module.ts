@@ -4,9 +4,11 @@ import { AuthGuard } from './modules/auth/auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { DatabaseModule } from './shared/database/database.module';
 import { CompaniesModule } from './modules/companies/companies.module';
+import { UsersModule } from './modules/users/users.module';
+import { VacanciesModule } from './modules/vacancies/vacancies.module';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, CompaniesModule],
+  imports: [DatabaseModule, AuthModule, CompaniesModule, UsersModule, VacanciesModule],
   providers: [
     {
       provide: APP_GUARD,

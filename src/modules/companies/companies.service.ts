@@ -136,7 +136,7 @@ export class CompaniesService {
     try {
       const user = await this.usersRepo.findUnique({ where: { id: userId } });
 
-      if (user.role !== 'admin' || user.companyId !== id) {
+      if (user.role !== 'admin' && user.companyId !== id) {
         throw new UnauthorizedException('You do not have permission to access');
       }
 

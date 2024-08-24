@@ -49,25 +49,49 @@ enum VacancyStatus {
 }
 
 enum VacancyLevel {
+  youngApprentice
+  internship
+  trainee
+  assistant
   junior
   pleno
   senior
+  coordinator
+  manager
+  director
   notApplicable
 }
 
+enum OperatingModel {
+  remote
+  hybrid
+  presential
+}
+
+enum ContractType {
+  internship
+  youngApprentice
+  clt
+  pj
+}
+
 model vacancies {
-  id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  level       VacancyLevel
-  minSalary   Float
-  maxSalary   Float
-  commission  Float
-  status      VacancyStatus
-  companyId   String        @db.ObjectId
-  company     companies     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  candidates  candidates[]
-  interviews  interviews[]
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  locationCep    String?
+  operatingModel OperatingModel
+  contractType   ContractType
+  description    String
+  additionalInfo String?
+  level          VacancyLevel
+  minSalary      Float
+  maxSalary      Float
+  commission     Float
+  status         VacancyStatus
+  companyId      String         @db.ObjectId
+  company        companies      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidates     candidates[]
+  interviews     interviews[]
 }
 
 enum CandidateStatus {
@@ -77,6 +101,7 @@ enum CandidateStatus {
   rejectedByRecruiter
   approvedByRecruiter
   rejectedByCompany
+  approvedByCompany
   hired
 }
 
@@ -89,6 +114,8 @@ model candidates {
   resume         String
   salaryExpected Float
   status         CandidateStatus
+  positivePoints String?
+  negativePoints String?
   companyId      String          @db.ObjectId
   company        companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   vacancyId      String          @db.ObjectId
