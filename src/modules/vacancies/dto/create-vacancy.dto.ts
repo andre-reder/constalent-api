@@ -1,4 +1,7 @@
 import {
+  IsArray,
+  IsBoolean,
+  IsDate,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
@@ -35,9 +38,25 @@ enum Level {
 }
 
 enum Status {
+  waiting = 'waiting',
   open = 'open',
   canceled = 'canceled',
   finished = 'finished',
+}
+
+enum Gender {
+  male = 'male',
+  female = 'female',
+  indistinct = 'indistinct',
+}
+
+enum EducationLevel {
+  fundamental = 'fundamental',
+  medium = 'medium',
+  superior = 'superior',
+  postGraduation = 'postGraduation',
+  master = 'master',
+  doctorate = 'doctorate',
 }
 
 export class CreateVacancyDto {
@@ -82,7 +101,7 @@ export class CreateVacancyDto {
 
   @IsNumber()
   @IsNotEmpty()
-  commission: number;
+  recruiterCommission: number;
 
   @IsString()
   @IsNotEmpty()
@@ -93,4 +112,115 @@ export class CreateVacancyDto {
   @IsNotEmpty()
   @IsMongoId()
   companyId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  department: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  hasVariableComissions: boolean;
+
+  @IsString()
+  @IsNotEmpty()
+  responsibleName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  responsiblePhone: string;
+
+  @IsString()
+  @IsNotEmpty()
+  responsibleEmail: string;
+
+  @IsString()
+  @IsNotEmpty()
+  reasonForOpening: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isSecret: boolean;
+
+  @IsNumber()
+  @IsNotEmpty()
+  vacanciesAmount: number;
+
+  @IsNumber()
+  @IsOptional()
+  subordinatesAmount?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  workingSchedule: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  needsTravel: boolean;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  needsExtraHours: boolean;
+
+  @IsNumber()
+  @IsNotEmpty()
+  minAge: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  maxAge: number;
+
+  @IsEnum(Gender)
+  @IsString()
+  @IsNotEmpty()
+  gender: Gender;
+
+  @IsEnum(EducationLevel)
+  @IsString()
+  @IsOptional()
+  educationLevel?: EducationLevel;
+
+  @IsArray()
+  @IsOptional()
+  benefits: string[];
+
+  @IsString()
+  @IsOptional()
+  otherBenefits?: string;
+
+  @IsNumber()
+  @IsOptional()
+  minExperience?: number;
+
+  @IsNumber()
+  @IsOptional()
+  desirableExperience?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  necessaryRequirements: string;
+
+  @IsOptional()
+  @IsString()
+  desirableRequirements?: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  willApplicantBeTested: boolean;
+
+  @IsOptional()
+  @IsDate()
+  alignmentMeetingDate?: Date;
+
+  @IsArray()
+  @IsOptional()
+  @IsDate({ each: true })
+  suggestionsOfAlignmentMeetingDates: Date[];
+
+  @IsNumber()
+  @IsNotEmpty()
+  recruiterComission: number;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isReposition: boolean;
 }

@@ -1,6 +1,7 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -10,6 +11,10 @@ export class CreateCompanyDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  fantasyName: string;
 
   @IsString()
   @IsNotEmpty()
@@ -32,6 +37,30 @@ export class CreateCompanyDto {
   @IsString()
   @IsNotEmpty()
   cnpj: string;
+
+  @IsString()
+  @IsNotEmpty()
+  streetName: string;
+
+  @IsNumber()
+  @IsOptional()
+  streetNumber?: number;
+
+  @IsString()
+  @IsNotEmpty()
+  cep: string;
+
+  @IsString()
+  @IsNotEmpty()
+  district: string;
+
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+
+  @IsString()
+  @IsNotEmpty()
+  uf: string;
 
   @IsOptional()
   @IsString()

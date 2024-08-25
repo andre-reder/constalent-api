@@ -4,10 +4,11 @@ import {
   Delete,
   Get,
   Param,
-  Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { ActiveUserId } from 'src/shared/decorators/ActiveUserId';
+import { ForbiddenRoles, Roles } from 'src/shared/decorators/ForbiddenRoles';
 import { CreateVacancyDto } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
 import { VacanciesService } from './vacancies.service';
@@ -15,14 +16,6 @@ import { VacanciesService } from './vacancies.service';
 @Controller('vacancies')
 export class VacanciesController {
   constructor(private readonly vacanciesService: VacanciesService) {}
-
-  @Post()
-  create(
-    @ActiveUserId() userId: string,
-    @Body() createVacancyDto: CreateVacancyDto,
-  ) {
-    return this.vacanciesService.create(userId, createVacancyDto);
-  }
 
   @Get()
   findAll() {
@@ -34,13 +27,26 @@ export class VacanciesController {
     return this.vacanciesService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVacancyDto: UpdateVacancyDto) {
-    return this.vacanciesService.update(+id, updateVacancyDto);
+  @Post()
+  create(
+    @ActiveUserId() userId: string,
+    @Body() createVacancyDto: CreateVacancyDto,
+  ) {
+    return this.vacanciesService.create(userId, createVacancyDto);
   }
 
+  @Put(':id')
+  update(
+    @ActiveUserId() userId: string,
+    @Param('id') id: string,
+    @Body() updateVacancyDto: UpdateVacancyDto,
+  ) {
+    return this.vacanciesService.update(userId, id, updateVacancyDto);
+  }
+
+  @ForbiddenRoles(Roles.customer)
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.vacanciesService.remove(+id);
+    return this.vacanciesService.remove(id);
   }
 }

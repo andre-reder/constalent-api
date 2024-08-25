@@ -29,20 +29,28 @@ model users {
 }
 
 model companies {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  email       String
-  phone       String
-  contactName String
-  contactRole String
-  cnpj        String       @unique()
-  users       users[]
-  vacancies   vacancies[]
-  candidates  candidates[]
-  interviews  interviews[]
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  cnpj         String       @unique()
+  name         String
+  fantasyName  String
+  email        String
+  phone        String
+  contactName  String
+  contactRole  String
+  cep          String
+  streetName   String
+  streetNumber Int?
+  district     String
+  city         String
+  uf           String
+  users        users[]
+  vacancies    vacancies[]
+  candidates   candidates[]
+  interviews   interviews[]
 }
 
 enum VacancyStatus {
+  waiting
   open
   canceled
   finished
@@ -75,23 +83,68 @@ enum ContractType {
   pj
 }
 
+enum Gender {
+  male
+  female
+  indistinct
+}
+
+enum EducationLevel {
+  fundamental
+  medium
+  superior
+  postGraduation
+  master
+  doctorate
+}
+
 model vacancies {
-  id             String         @id @default(auto()) @map("_id") @db.ObjectId
-  title          String
-  locationCep    String?
-  operatingModel OperatingModel
-  contractType   ContractType
-  description    String
-  additionalInfo String?
-  level          VacancyLevel
-  minSalary      Float
-  maxSalary      Float
-  commission     Float
-  status         VacancyStatus
-  companyId      String         @db.ObjectId
-  company        companies      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  candidates     candidates[]
-  interviews     interviews[]
+  id                                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  title                              String
+  department                         String
+  locationCep                        String?
+  operatingModel                     OperatingModel
+  contractType                       ContractType
+  description                        String
+  additionalInfo                     String?
+  level                              VacancyLevel
+  minSalary                          Float
+  maxSalary                          Float
+  hasVariableComissions              Boolean         @default(false)
+  responsibleName                    String
+  responsiblePhone                   String
+  responsibleEmail                   String
+  reasonForOpening                   String
+  isSecret                           Boolean         @default(false)
+  vacanciesAmount                    Int
+  subordinatesAmount                 Int?
+  workingSchedule                    String
+  needsTravel                        Boolean         @default(false)
+  needsExtraHours                    Boolean         @default(false)
+  minAge                             Int
+  maxAge                             Int
+  gender                             Gender
+  educationLevel                     EducationLevel?
+  benefits                           String[]
+  otherBenefits                      String?
+  minExperience                      Int?
+  desirableExperience                Int?
+  necessaryRequirements              String
+  desirableRequirements              String?
+  willApplicantBeTested              Boolean         @default(false)
+  recruiterComission                 Float
+  alignmentMeetingDate               DateTime?
+  suggestionsOfAlignmentMeetingDates DateTime[]
+  createdAt                          DateTime
+  openedAt                           DateTime?
+  finishedAt                         DateTime?
+  canceledAt                         DateTime?
+  isReposition                       Boolean         @default(false)
+  status                             VacancyStatus
+  companyId                          String          @db.ObjectId
+  company                            companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidates                         candidates[]
+  interviews                         interviews[]
 }
 
 enum CandidateStatus {
@@ -116,6 +169,7 @@ model candidates {
   status         CandidateStatus
   positivePoints String?
   negativePoints String?
+  createdAt      DateTime
   companyId      String          @db.ObjectId
   company        companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   vacancyId      String          @db.ObjectId
