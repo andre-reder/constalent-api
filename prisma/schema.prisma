@@ -18,37 +18,6 @@ enum UserRole {
   customer
 }
 
-model users {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String     @unique()
-  authId    String     @unique()
-  role      UserRole
-  companyId String?    @db.ObjectId
-  company   companies? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model companies {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  cnpj         String       @unique()
-  name         String
-  fantasyName  String
-  email        String
-  phone        String
-  contactName  String
-  contactRole  String
-  cep          String
-  streetName   String
-  streetNumber Int?
-  district     String
-  city         String
-  uf           String
-  users        users[]
-  vacancies    vacancies[]
-  candidates   candidates[]
-  interviews   interviews[]
-}
-
 enum VacancyStatus {
   waiting
   open
@@ -98,6 +67,69 @@ enum EducationLevel {
   doctorate
 }
 
+enum CandidateStatus {
+  stored
+  applied
+  hired
+}
+
+enum ApplicationStatus {
+  rejectedByRecruiter
+  approvedByRecruiter
+  rejectedByCompany
+  approvedByCompany
+}
+
+enum InterviewType {
+  recruiter
+  company
+}
+
+enum InterviewStatus {
+  scheduled
+  canceled
+  approved
+  rejected
+}
+
+enum MaritalStatus {
+  single
+  married
+  divorced
+  widowed
+}
+
+model users {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String     @unique()
+  authId    String     @unique()
+  role      UserRole
+  companyId String?    @db.ObjectId
+  company   companies? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model companies {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  cnpj         String         @unique()
+  name         String
+  fantasyName  String
+  email        String
+  phone        String
+  contactName  String
+  contactRole  String
+  cep          String
+  streetName   String
+  streetNumber Int?
+  district     String
+  city         String
+  uf           String
+  users        users[]
+  vacancies    vacancies[]
+  interviews   interviews[]
+  applications applications[]
+}
+
 model vacancies {
   id                                 String          @id @default(auto()) @map("_id") @db.ObjectId
   title                              String
@@ -143,64 +175,71 @@ model vacancies {
   status                             VacancyStatus
   companyId                          String          @db.ObjectId
   company                            companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  candidates                         candidates[]
   interviews                         interviews[]
-}
-
-enum CandidateStatus {
-  applied
-  approvedForInterview
-  rejectedForInterview
-  rejectedByRecruiter
-  approvedByRecruiter
-  rejectedByCompany
-  approvedByCompany
-  hired
+  applications                       applications[]
 }
 
 model candidates {
-  id             String          @id @default(auto()) @map("_id") @db.ObjectId
-  name           String
-  email          String
-  phone          String
-  linkedin       String
-  resume         String
-  salaryExpected Float
-  status         CandidateStatus
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  email            String
+  phone            String
+  linkedin         String?
+  resume           String
+  salaryExpected   Float
+  birthDate        DateTime
+  gender           Gender
+  educationLevel   EducationLevel
+  graduationCourse String?
+  cpf              String
+  rg               String
+  cep              String?
+  streetNumber     Int?
+  maritalStatus    MaritalStatus
+  childrenAmount   Int
+  lastSalary       Float?
+  lastCompany      String?
+  lastPosition     String?
+  status           CandidateStatus
+  createdAt        DateTime
+
+  interviews   interviews[]
+  applications applications[]
+}
+
+model applications {
+  id             String            @id @default(auto()) @map("_id") @db.ObjectId
+  date           DateTime
   positivePoints String?
   negativePoints String?
-  createdAt      DateTime
-  companyId      String          @db.ObjectId
-  company        companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  vacancyId      String          @db.ObjectId
-  vacancy        vacancies       @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
-  interviews     interviews[]
-}
+  status         ApplicationStatus
 
-enum InterviewType {
-  recruiter
-  company
-}
+  candidateId String     @db.ObjectId
+  candidate   candidates @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  vacancyId   String     @db.ObjectId
+  vacancy     vacancies  @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  companyId   String     @db.ObjectId
+  company     companies  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-enum InterviewStatus {
-  scheduled
-  canceled
-  approved
-  rejected
+  interviews interviews[]
 }
 
 model interviews {
-  id          String          @id @default(auto()) @map("_id") @db.ObjectId
-  date        DateTime
-  details     String
-  type        InterviewType
-  status      InterviewStatus
-  companyId   String          @db.ObjectId
-  company     companies       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  candidateId String          @db.ObjectId
-  candidate   candidates      @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  vacancyId   String          @db.ObjectId
-  vacancy     vacancies       @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  date      DateTime
+  details   String
+  aiSummary String?
+  type      InterviewType
+  status    InterviewStatus
+
+  companyId     String       @db.ObjectId
+  company       companies    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidateId   String       @db.ObjectId
+  candidate     candidates   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  vacancyId     String       @db.ObjectId
+  vacancy       vacancies    @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  application   applications @relation(fields: [applicationId], references: [id])
+  applicationId String       @db.ObjectId
 
   @@unique([candidateId, vacancyId, type])
 }

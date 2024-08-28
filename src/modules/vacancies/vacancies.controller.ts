@@ -18,13 +18,13 @@ export class VacanciesController {
   constructor(private readonly vacanciesService: VacanciesService) {}
 
   @Get()
-  findAll() {
-    return this.vacanciesService.findAll();
+  findAll(@ActiveUserId() userId: string) {
+    return this.vacanciesService.findAll(userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.vacanciesService.findOne(+id);
+  findOne(@ActiveUserId() userId: string, @Param('id') id: string) {
+    return this.vacanciesService.findOne(userId, id);
   }
 
   @Post()

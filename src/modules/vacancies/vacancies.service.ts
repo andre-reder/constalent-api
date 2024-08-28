@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { isAfter } from 'date-fns';
-import { deleteObject, getStorage, ref } from 'firebase/storage';
+import { ApplicationsRepository } from 'src/shared/database/repositories/applications.repository';
 import { CandidatesRepository } from 'src/shared/database/repositories/candidates.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repository';
 import { VacanciesRepository } from 'src/shared/database/repositories/vacancies.repository';
@@ -13,6 +13,7 @@ export class VacanciesService {
     private readonly vacanciesRepo: VacanciesRepository,
     private readonly usersRepo: UsersRepository,
     private readonly candidatesRepo: CandidatesRepository,
+    private readonly applicationsRepo: ApplicationsRepository,
   ) {}
 
   async findAll(userId: string) {
@@ -126,8 +127,8 @@ export class VacanciesService {
       const isCancellingVacancy = isChangingStatus && newStatus === 'canceled';
       const isFinishingVacancy = isChangingStatus && newStatus === 'finished';
 
-      const hiredCandidates = await this.candidatesRepo.findMany({
-        where: { vacancyId: id, status: 'hired' },
+      const hiredCandidates = await this.applicationsRepo.findMany({
+        where: { vacancyId: id, status: 'approvedByCompany' },
       });
 
       const canFinishVacancy =
@@ -206,46 +207,8 @@ export class VacanciesService {
 
   async remove(id: string) {
     try {
-      const vacancyDetails = await this.vacanciesRepo.findUnique({
-        where: { id },
-        include: {
-          candidates: { select: { resume: true } },
-        },
-      });
-
-      if (vacancyDetails.candidates.length >= 1) {
-        const candidatesResumes = vacancyDetails.candidates.map(
-          (x) => x.resume,
-        );
-
-        const functionsToRemoveResumesFromFirebase = candidatesResumes.map(
-          (resume) =>
-            (async () => {
-              if (!resume) return;
-
-              const pathToResume = resume
-                .split('appspot.com/')[1]
-                .split('?')[0];
-              const pathToResumeSplit = pathToResume.split('/');
-
-              const resumeFileName = decodeURIComponent(
-                pathToResumeSplit.pop(),
-              );
-              const pathToResumeFolder = pathToResumeSplit.join('/');
-
-              const fullPathToResumeFile = `${pathToResumeFolder}/${resumeFileName}`;
-
-              const storage = getStorage();
-              const resumeRef = ref(storage, fullPathToResumeFile);
-
-              await deleteObject(resumeRef);
-            })(),
-        );
-
-        await Promise.all(functionsToRemoveResumesFromFirebase);
-      }
-
       await this.vacanciesRepo.delete({ where: { id } });
+
       return { success: true };
     } catch (error) {
       error.success = false;

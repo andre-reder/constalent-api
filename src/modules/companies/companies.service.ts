@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import admin from 'firebase-admin';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
-import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { CompaniesRepository } from 'src/shared/database/repositories/companies.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repository';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -142,7 +141,7 @@ export class CompaniesService {
 
       const companyDetails = await this.companiesRepo.findUnique({
         where: { id },
-        include: { users: true, candidates: true },
+        include: { users: { select: { authId: true } } },
       });
 
       if (companyDetails.users.length >= 1) {
@@ -157,38 +156,6 @@ export class CompaniesService {
         );
 
         await Promise.all(functionsToRemoveFromFirebase);
-      }
-
-      if (companyDetails.candidates.length >= 1) {
-        const candidatesResumes = companyDetails.candidates.map(
-          (x) => x.resume,
-        );
-
-        const functionsToRemoveResumesFromFirebase = candidatesResumes.map(
-          (resume) =>
-            (async () => {
-              if (!resume) return;
-
-              const pathToResume = resume
-                .split('appspot.com/')[1]
-                .split('?')[0];
-              const pathToResumeSplit = pathToResume.split('/');
-
-              const resumeFileName = decodeURIComponent(
-                pathToResumeSplit.pop(),
-              );
-              const pathToResumeFolder = pathToResumeSplit.join('/');
-
-              const fullPathToResumeFile = `${pathToResumeFolder}/${resumeFileName}`;
-
-              const storage = getStorage();
-              const resumeRef = ref(storage, fullPathToResumeFile);
-
-              await deleteObject(resumeRef);
-            })(),
-        );
-
-        await Promise.all(functionsToRemoveResumesFromFirebase);
       }
 
       await this.companiesRepo.delete({ where: { id } });

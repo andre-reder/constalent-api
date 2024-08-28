@@ -6,9 +6,10 @@ import { DatabaseModule } from './shared/database/database.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { UsersModule } from './modules/users/users.module';
 import { VacanciesModule } from './modules/vacancies/vacancies.module';
+import { CandidatesModule } from './modules/candidates/candidates.module';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, CompaniesModule, UsersModule, VacanciesModule],
+  imports: [DatabaseModule, AuthModule, CompaniesModule, UsersModule, VacanciesModule, CandidatesModule],
   providers: [
     {
       provide: APP_GUARD,
