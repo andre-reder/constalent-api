@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { isAfter } from 'date-fns';
 import { ApplicationsRepository } from 'src/shared/database/repositories/applications.repository';
 import { CandidatesRepository } from 'src/shared/database/repositories/candidates.repository';
+import { InterviewsRepository } from 'src/shared/database/repositories/interviews.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repository';
 import { VacanciesRepository } from 'src/shared/database/repositories/vacancies.repository';
 import { CreateVacancyDto } from './dto/create-vacancy.dto';
@@ -14,6 +15,7 @@ export class VacanciesService {
     private readonly usersRepo: UsersRepository,
     private readonly candidatesRepo: CandidatesRepository,
     private readonly applicationsRepo: ApplicationsRepository,
+    private readonly interviewsRepo: InterviewsRepository,
   ) {}
 
   async findAll(userId: string) {
@@ -197,6 +199,82 @@ export class VacanciesService {
             : {}),
         },
       });
+
+      if (isFinishingVacancy) {
+        const restoreCandidates = async () => {
+          await this.candidatesRepo.updateMany({
+            where: {
+              applications: {
+                some: {
+                  vacancyId: id,
+                  status: { in: ['rejectedByCompany', 'rejectedByRecruiter'] },
+                },
+              },
+            },
+            data: { status: 'stored' },
+          });
+        };
+
+        const changeApplicationsThatWereWaitingStatus = async () => {
+          await this.applicationsRepo.updateMany({
+            where: {
+              vacancyId: id,
+              status: { in: ['approvedByRecruiter', 'waiting'] },
+            },
+            data: { status: 'notContinued' },
+          });
+        };
+
+        const cancelAllPendingInterviews = async () => {
+          await this.interviewsRepo.updateMany({
+            where: { vacancyId: id, status: 'scheduled' },
+            data: { status: 'canceled' },
+          });
+        };
+
+        await Promise.all([
+          restoreCandidates(),
+          changeApplicationsThatWereWaitingStatus(),
+          cancelAllPendingInterviews(),
+        ]);
+      }
+
+      if (isCancellingVacancy) {
+        const restoreCandidates = async () => {
+          await this.candidatesRepo.updateMany({
+            where: {
+              applications: {
+                some: {
+                  vacancyId: id,
+                },
+              },
+            },
+            data: { status: 'stored' },
+          });
+        };
+
+        const changeApplicationsThatWereWaitingStatus = async () => {
+          await this.applicationsRepo.updateMany({
+            where: {
+              vacancyId: id,
+            },
+            data: { status: 'notContinued' },
+          });
+        };
+
+        const cancelAllPendingInterviews = async () => {
+          await this.interviewsRepo.updateMany({
+            where: { vacancyId: id, status: 'scheduled' },
+            data: { status: 'canceled' },
+          });
+        };
+
+        await Promise.all([
+          restoreCandidates(),
+          changeApplicationsThatWereWaitingStatus(),
+          cancelAllPendingInterviews(),
+        ]);
+      }
 
       return { success: true };
     } catch (error) {

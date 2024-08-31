@@ -28,6 +28,12 @@ export class ApplicationsRepository {
     return this.prismaService.applications.update(updateDto);
   }
 
+  updateMany<T extends Prisma.applicationsUpdateManyArgs>(
+    updateManyDto: Prisma.SelectSubset<T, Prisma.applicationsUpdateManyArgs>,
+  ) {
+    return this.prismaService.applications.updateMany(updateManyDto);
+  }
+
   delete(deleteDto: Prisma.applicationsDeleteArgs) {
     return this.prismaService.applications.delete(deleteDto);
   }

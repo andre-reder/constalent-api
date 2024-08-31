@@ -6,8 +6,12 @@ import {
   Param,
   Post,
   Put,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ActiveUserId } from 'src/shared/decorators/ActiveUserId';
+import { ForbiddenRoles, Roles } from 'src/shared/decorators/ForbiddenRoles';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
@@ -31,19 +35,46 @@ export class CandidatesController {
   }
 
   @Post()
+  @ForbiddenRoles(Roles.customer)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'resume', maxCount: 1 },
+      { name: 'psycologicalTest', maxCount: 1 },
+      { name: 'candidatesForm', maxCount: 1 },
+    ]),
+  )
   create(
-    @ActiveUserId() userId: string,
     @Body() createCandidateDto: CreateCandidateDto,
+    @UploadedFiles()
+    files: {
+      resume: Express.Multer.File[];
+      psycologicalTest: Express.Multer.File[];
+      candidatesForm: Express.Multer.File[];
+    },
   ) {
-    return this.candidatesService.create(userId, createCandidateDto);
+    return this.candidatesService.create(createCandidateDto, files);
   }
 
   @Put(':id')
+  @ForbiddenRoles(Roles.customer)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'resume', maxCount: 1 },
+      { name: 'psycologicalTest', maxCount: 1 },
+      { name: 'candidatesForm', maxCount: 1 },
+    ]),
+  )
   update(
     @Param('id') id: string,
     @Body() updateCandidateDto: UpdateCandidateDto,
+    @UploadedFiles()
+    files: {
+      resume: Express.Multer.File[];
+      psycologicalTest: Express.Multer.File[];
+      candidatesForm: Express.Multer.File[];
+    },
   ) {
-    return this.candidatesService.update(id, updateCandidateDto);
+    return this.candidatesService.update(id, updateCandidateDto, files);
   }
 
   @Delete(':id')

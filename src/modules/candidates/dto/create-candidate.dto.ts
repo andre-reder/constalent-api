@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsDate,
   IsEmail,
@@ -58,10 +59,12 @@ export class CreateCandidateDto {
 
   @IsNumber()
   @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
   salaryExpected: number;
 
   @IsNotEmpty()
   @IsDate()
+  @Transform(({ value }) => new Date(value))
   birthDate: Date;
 
   @IsString()
@@ -92,6 +95,7 @@ export class CreateCandidateDto {
 
   @IsInt()
   @IsOptional()
+  @Transform(({ value }) => Number(value))
   streetNumber?: number;
 
   @IsString()
@@ -101,10 +105,12 @@ export class CreateCandidateDto {
 
   @IsInt()
   @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
   childrenAmount: number;
 
   @IsNumber()
   @IsOptional()
+  @Transform(({ value }) => Number(value))
   lastSalary?: number;
 
   @IsString()
