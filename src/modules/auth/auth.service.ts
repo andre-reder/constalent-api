@@ -58,7 +58,7 @@ export class AuthService {
         where: {
           authId: userCredential.user.uid,
         },
-        select: { id: true, role: true },
+        select: { id: true, role: true, name: true },
       });
 
       if (!user) {
@@ -67,7 +67,6 @@ export class AuthService {
 
       const customUserObject = {
         ...user,
-        _id: user.id,
       };
 
       const accessToken = await this.generateAccessToken(
