@@ -39,6 +39,19 @@ export class CompaniesService {
     }
   }
 
+  async findAllResumed() {
+    try {
+      const companies = await this.companiesRepo.findMany({
+        select: { id: true, name: true },
+      });
+
+      return { success: true, companies };
+    } catch (error) {
+      error.success = false;
+      throw error;
+    }
+  }
+
   async findOne(userId: string, id: string) {
     try {
       const user = await this.usersRepo.findUnique({ where: { id: userId } });

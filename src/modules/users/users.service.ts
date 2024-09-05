@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
+import admin from 'firebase-admin';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { CompaniesRepository } from 'src/shared/database/repositories/companies.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repository';
@@ -32,6 +33,7 @@ export class UsersService {
     try {
       const userDetails = await this.usersRepo.findUnique({
         where: { id: userId },
+        include: { company: { select: { name: true, id: true } } },
       });
 
       const allUsers = await this.usersRepo.findMany({
@@ -59,6 +61,7 @@ export class UsersService {
       const getUserToBeReturned = async () =>
         await this.usersRepo.findUnique({
           where: { id },
+          include: { company: { select: { id: true, name: true } } },
         });
 
       const [userDetails, userToBeReturned] = await Promise.all([
@@ -164,6 +167,10 @@ export class UsersService {
         getUserToBeRemoved(),
       ]);
 
+      if (userDetails.id === userToBeRemoved.id) {
+        throw new BadRequestException('You cannot remove yourself');
+      }
+
       const isUserAdmin = userDetails.role === 'admin';
       const areUsersInSameCompany =
         userDetails.companyId === userToBeRemoved.companyId;
@@ -184,6 +191,10 @@ export class UsersService {
           'You cannot remove the last user of a company',
         );
       }
+
+      const authId = userToBeRemoved.authId;
+      const firebaseApp = admin.auth();
+      await firebaseApp.deleteUser(authId);
 
       await this.usersRepo.delete({ where: { id } });
 

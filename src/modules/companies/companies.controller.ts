@@ -23,6 +23,12 @@ export class CompaniesController {
     return this.companiesService.findAll();
   }
 
+  @Get('resumed')
+  @ForbiddenRoles(Roles.customer)
+  findResumedAll() {
+    return this.companiesService.findAllResumed();
+  }
+
   @Get(':id')
   findOne(@ActiveUserId() userId: string, @Param('id') id: string) {
     return this.companiesService.findOne(userId, id);

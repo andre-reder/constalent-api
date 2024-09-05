@@ -2,12 +2,17 @@ import 'dotenv/config';
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import admin, { ServiceAccount } from 'firebase-admin';
 import { initializeApp } from 'firebase/app';
 import { AppModule } from './app.module';
+import serviceAccount from './constalent-sdk.json';
 import { ErrorResponseFilter } from './shared/filters/error-response.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount as ServiceAccount),
+    storageBucket: 'constalent-35e52.appspot.com',
+  });
 
   const firebaseConfig = {
     apiKey: 'AIzaSyD2_xZcROy5PmjAjLD1ggHmosoX0sGaqGg',
@@ -17,9 +22,9 @@ async function bootstrap() {
     messagingSenderId: '924894933881',
     appId: '1:924894933881:web:02c847e8a157f3261e35a8',
   };
-
   initializeApp(firebaseConfig);
 
+  const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new ErrorResponseFilter());
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.enableCors({
