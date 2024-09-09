@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -98,10 +99,6 @@ export class CreateVacancyDto {
   @IsNumber()
   @IsNotEmpty()
   maxSalary: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  recruiterCommission: number;
 
   @IsString()
   @IsNotEmpty()
@@ -209,16 +206,16 @@ export class CreateVacancyDto {
 
   @IsOptional()
   @IsDate()
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   alignmentMeetingDate?: Date;
 
   @IsArray()
   @IsOptional()
   @IsDate({ each: true })
+  @Transform(({ value }) =>
+    value.map((date) => (date ? new Date(date) : undefined)),
+  )
   suggestionsOfAlignmentMeetingDates: Date[];
-
-  @IsNumber()
-  @IsNotEmpty()
-  recruiterComission: number;
 
   @IsBoolean()
   @IsNotEmpty()

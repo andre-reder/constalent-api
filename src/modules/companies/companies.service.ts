@@ -60,7 +60,7 @@ export class CompaniesService {
         throw new UnauthorizedException('You do not have permission to access');
       }
 
-      const company = this.companiesRepo.findUnique({ where: { id } });
+      const company = await this.companiesRepo.findUnique({ where: { id } });
 
       return { success: true, company };
     } catch (error) {
@@ -102,11 +102,11 @@ export class CompaniesService {
       if (willCreateUser) {
         await this.usersRepo.create({
           data: {
-            companyId: company.id,
             authId,
             email: userLoginEmail,
             role: 'customer',
             name: companyData.contactName,
+            company: { connect: { id: company.id } },
           },
         });
       }

@@ -79,7 +79,7 @@ export class CreateCandidateDto {
 
   @IsString()
   @IsOptional()
-  gradutationCourse?: string;
+  graduationCourse?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -97,6 +97,22 @@ export class CreateCandidateDto {
   @IsOptional()
   @Transform(({ value }) => Number(value))
   streetNumber?: number;
+
+  @IsString()
+  @IsOptional()
+  streetName?: string;
+
+  @IsString()
+  @IsOptional()
+  district?: string;
+
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  uf?: string;
 
   @IsString()
   @IsNotEmpty()

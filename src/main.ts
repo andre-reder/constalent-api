@@ -4,16 +4,11 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import admin, { ServiceAccount } from 'firebase-admin';
 import { initializeApp } from 'firebase/app';
+import serviceAccount from '../constalent-sdk.json';
 import { AppModule } from './app.module';
-import serviceAccount from './constalent-sdk.json';
 import { ErrorResponseFilter } from './shared/filters/error-response.filter';
 
 async function bootstrap() {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount as ServiceAccount),
-    storageBucket: 'constalent-35e52.appspot.com',
-  });
-
   const firebaseConfig = {
     apiKey: 'AIzaSyD2_xZcROy5PmjAjLD1ggHmosoX0sGaqGg',
     authDomain: 'constalent-35e52.firebaseapp.com',
@@ -23,6 +18,11 @@ async function bootstrap() {
     appId: '1:924894933881:web:02c847e8a157f3261e35a8',
   };
   initializeApp(firebaseConfig);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount as ServiceAccount),
+    storageBucket: 'constalent-35e52.appspot.com',
+  });
 
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new ErrorResponseFilter());

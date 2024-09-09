@@ -112,24 +112,27 @@ model users {
 }
 
 model companies {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  cnpj         String         @unique()
-  name         String
-  fantasyName  String
-  email        String
-  phone        String
-  contactName  String
-  contactRole  String
-  cep          String
-  streetName   String
-  streetNumber Int?
-  district     String
-  city         String
-  uf           String
-  users        users[]
-  vacancies    vacancies[]
-  interviews   interviews[]
-  applications applications[]
+  id                  String         @id @default(auto()) @map("_id") @db.ObjectId
+  cnpj                String         @unique()
+  name                String
+  fantasyName         String
+  email               String
+  phone               String
+  contactName         String
+  contactRole         String
+  cep                 String
+  streetName          String
+  streetNumber        Int?
+  district            String
+  city                String
+  uf                  String
+  minComission        Int
+  maxComission        Int
+  comissionPercentage Int
+  users               users[]
+  vacancies           vacancies[]
+  interviews          interviews[]
+  applications        applications[]
 }
 
 model vacancies {
@@ -166,7 +169,6 @@ model vacancies {
   necessaryRequirements              String
   desirableRequirements              String?
   willApplicantBeTested              Boolean         @default(false)
-  recruiterComission                 Float
   alignmentMeetingDate               DateTime?
   suggestionsOfAlignmentMeetingDates DateTime[]
   createdAt                          DateTime
@@ -199,6 +201,10 @@ model candidates {
   rg               String          @unique()
   cep              String?
   streetNumber     Int?
+  streetName       String?
+  district         String?
+  city             String?
+  uf               String?
   maritalStatus    MaritalStatus
   childrenAmount   Int
   lastSalary       Float?
@@ -212,11 +218,13 @@ model candidates {
 }
 
 model applications {
-  id             String            @id @default(auto()) @map("_id") @db.ObjectId
-  date           DateTime
-  positivePoints String?
-  negativePoints String?
-  status         ApplicationStatus
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  date               DateTime
+  positivePoints     String?
+  negativePoints     String?
+  status             ApplicationStatus
+  recruiterComission Float?
+  finalSalary        Float?
 
   candidateId String     @db.ObjectId
   candidate   candidates @relation(fields: [candidateId], references: [id], onDelete: Cascade)

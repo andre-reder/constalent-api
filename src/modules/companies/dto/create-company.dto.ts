@@ -46,6 +46,18 @@ export class CreateCompanyDto {
   @IsOptional()
   streetNumber?: number;
 
+  @IsNumber()
+  @IsNotEmpty()
+  minComission: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  maxComission: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  comissionPercentage: number;
+
   @IsString()
   @IsNotEmpty()
   cep: string;

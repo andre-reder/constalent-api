@@ -42,6 +42,7 @@ export class UsersService {
               where: { companyId: userDetails.companyId },
             }
           : {}),
+        include: { company: { select: { name: true, id: true } } },
       });
 
       return { success: true, users: allUsers };
@@ -98,7 +99,7 @@ export class UsersService {
         throw new Error('You are not authorized to perform this action');
       }
 
-      const { email, password, ...rest } = createUserDto;
+      const { email, password, companyId, ...rest } = createUserDto;
       await this.checkIfEmailAlreadyExists(email);
       const auth = getAuth();
       const user = await createUserWithEmailAndPassword(auth, email, password);
@@ -113,6 +114,7 @@ export class UsersService {
           ...rest,
           email,
           authId: userAuthId,
+          ...(companyId ? { company: { connect: { id: companyId } } } : {}),
         },
       });
 

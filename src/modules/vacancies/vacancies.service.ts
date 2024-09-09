@@ -28,6 +28,7 @@ export class VacanciesService {
         ...(userDetails.role === 'customer'
           ? { where: { companyId: userDetails.companyId } }
           : {}),
+        include: { company: { select: { name: true, id: true } } },
       });
 
       return { success: true, vacancies };
@@ -90,6 +91,8 @@ export class VacanciesService {
           },
         },
       });
+
+      return { success: true };
     } catch (error) {
       error.success = false;
       throw error;

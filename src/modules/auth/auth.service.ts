@@ -58,7 +58,7 @@ export class AuthService {
         where: {
           authId: userCredential.user.uid,
         },
-        select: { id: true, role: true, name: true },
+        select: { id: true, role: true, name: true, companyId: true },
       });
 
       if (!user) {

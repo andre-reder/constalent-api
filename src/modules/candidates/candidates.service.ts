@@ -199,6 +199,7 @@ export class CandidatesService {
 
       return { success: true };
     } catch (error) {
+      console.log(error);
       await Promise.all([
         removeFileFirebase(resumeUrl),
         ...(psycologicalTestUrl
