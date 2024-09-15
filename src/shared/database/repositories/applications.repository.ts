@@ -37,4 +37,8 @@ export class ApplicationsRepository {
   delete(deleteDto: Prisma.applicationsDeleteArgs) {
     return this.prismaService.applications.delete(deleteDto);
   }
+
+  deleteMany(deleteManyDto: Prisma.applicationsDeleteManyArgs) {
+    return this.prismaService.applications.deleteMany(deleteManyDto);
+  }
 }

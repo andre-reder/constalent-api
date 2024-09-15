@@ -2,6 +2,7 @@ import {
   IsEnum,
   IsMongoId,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -12,6 +13,7 @@ export enum ApplicationStatus {
   approvedByRecruiter = 'approvedByRecruiter',
   rejectedByCompany = 'rejectedByCompany',
   approvedByCompany = 'approvedByCompany',
+  notContinued = 'notContinued',
 }
 
 export class CreateApplicationDto {
@@ -37,4 +39,8 @@ export class CreateApplicationDto {
   @IsOptional()
   @IsString()
   negativePoints?: string;
+
+  @IsOptional()
+  @IsNumber()
+  finalSalary?: number;
 }

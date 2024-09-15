@@ -1,5 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { isAfter } from 'date-fns';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ApplicationsRepository } from 'src/shared/database/repositories/applications.repository';
 import { CandidatesRepository } from 'src/shared/database/repositories/candidates.repository';
 import { InterviewsRepository } from 'src/shared/database/repositories/interviews.repository';
@@ -29,6 +28,30 @@ export class VacanciesService {
           ? { where: { companyId: userDetails.companyId } }
           : {}),
         include: { company: { select: { name: true, id: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return { success: true, vacancies };
+    } catch (error) {
+      error.success = false;
+      throw error;
+    }
+  }
+
+  async findAllResumed(userId: string) {
+    try {
+      const userDetails = await this.usersRepo.findUnique({
+        where: { id: userId },
+      });
+
+      const vacancies = await this.vacanciesRepo.findMany({
+        where: {
+          status: 'open',
+          ...(userDetails.role === 'customer'
+            ? { companyId: userDetails.companyId }
+            : {}),
+        },
+        select: { id: true, title: true, companyId: true },
       });
 
       return { success: true, vacancies };
@@ -52,7 +75,7 @@ export class VacanciesService {
         userDetails.role === 'customer' &&
         userDetails.companyId !== vacancy.companyId
       ) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You are not allowed to access this vacancy',
         );
       }
@@ -73,7 +96,7 @@ export class VacanciesService {
       const { role, companyId: userCompanyId } = userDetails;
 
       if (role !== 'admin' && userCompanyId !== createVacancyDto.companyId) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You are not allowed to create vacancies for this company',
         );
       }
@@ -108,7 +131,7 @@ export class VacanciesService {
       const { role, companyId } = userDetails;
 
       if (role === 'customer' && companyId !== updateVacancyDto.companyId) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You are not allowed to update vacancies for this company',
         );
       }
@@ -122,9 +145,7 @@ export class VacanciesService {
       const isChangingStatus = currentStatus !== newStatus;
 
       if (isChangingStatus && role === 'customer' && newStatus === 'open') {
-        throw new UnauthorizedException(
-          'You are not allowed to open a vacancy',
-        );
+        throw new BadRequestException('You are not allowed to open a vacancy');
       }
 
       const isReopeningVacancy = isChangingStatus && newStatus === 'waiting';
@@ -140,7 +161,7 @@ export class VacanciesService {
         hiredCandidates.length >= vacancy.vacanciesAmount;
 
       if (isFinishingVacancy && !canFinishVacancy) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You cannot finish a vacancy without hiring the necessary amount of candidates',
         );
       }
@@ -148,17 +169,17 @@ export class VacanciesService {
       const canCancelVacancy = hiredCandidates.length === 0;
 
       if (isCancellingVacancy && !canCancelVacancy) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You cannot cancel a vacancy with hired candidates',
         );
       }
 
+      const { alignmentMeetingDate } = updateVacancyDto;
       const canOpenVacancy =
-        vacancy.alignmentMeetingDate &&
-        isAfter(new Date(), vacancy.alignmentMeetingDate);
+        vacancy.alignmentMeetingDate || alignmentMeetingDate;
 
       if (isOpeningVacancy && !canOpenVacancy) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You cannot open a vacancy before the alignment meeting date',
         );
       }
@@ -166,7 +187,7 @@ export class VacanciesService {
       const canReopenVacancy = currentStatus === 'canceled';
 
       if (isReopeningVacancy && !canReopenVacancy) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You cannot reopen a vacancy that is not canceled',
         );
       }
@@ -288,7 +309,45 @@ export class VacanciesService {
 
   async remove(id: string) {
     try {
-      await this.vacanciesRepo.delete({ where: { id } });
+      const vacancy = await this.vacanciesRepo.findUnique({
+        where: { id },
+      });
+
+      const removeVacancy = async () =>
+        await this.vacanciesRepo.delete({ where: { id } });
+
+      const removeApplications = async () => {
+        await this.applicationsRepo.deleteMany({
+          where: { vacancyId: vacancy.id },
+        });
+      };
+
+      const removeInterviews = async () => {
+        await this.interviewsRepo.deleteMany({
+          where: { vacancyId: vacancy.id },
+        });
+      };
+
+      const storeCandidates = async () => {
+        await this.candidatesRepo.updateMany({
+          where: {
+            applications: {
+              some: {
+                vacancyId: vacancy.id,
+                status: { in: ['approvedByRecruiter', 'waiting'] },
+              },
+            },
+          },
+          data: { status: 'stored' },
+        });
+      };
+
+      await Promise.all([
+        removeVacancy(),
+        removeApplications(),
+        removeInterviews(),
+        storeCandidates(),
+      ]);
 
       return { success: true };
     } catch (error) {

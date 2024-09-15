@@ -20,6 +20,16 @@ export class ApplicationsController {
     return this.applicationsService.findAll(userId);
   }
 
+  @Get('/interviews/:id')
+  findInterviews(@ActiveUserId() userId: string, @Param('id') id: string) {
+    return this.applicationsService.findInterviews(userId, id);
+  }
+
+  @Get('/candidatesDocs/:id')
+  findCandidatesDocs(@Param('id') id: string) {
+    return this.applicationsService.findCandidatesDocs(id);
+  }
+
   @Get(':id')
   findOne(@ActiveUserId() userId: string, @Param('id') id: string) {
     return this.applicationsService.findOne(userId, id);

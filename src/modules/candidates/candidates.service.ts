@@ -1,11 +1,13 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { ApplicationsRepository } from 'src/shared/database/repositories/applications.repository';
 import { CandidatesRepository } from 'src/shared/database/repositories/candidates.repository';
+import { InterviewsRepository } from 'src/shared/database/repositories/interviews.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repository';
 import { VacanciesRepository } from 'src/shared/database/repositories/vacancies.repository';
 import removeFileFirebase from 'src/shared/utils/removeFileFirebase';
@@ -18,6 +20,8 @@ export class CandidatesService {
     private readonly candidatesRepo: CandidatesRepository,
     private readonly vacanciesRepo: VacanciesRepository,
     private readonly usersRepo: UsersRepository,
+    private readonly interviewsRepo: InterviewsRepository,
+    private readonly applicationsRepo: ApplicationsRepository,
   ) {}
 
   async findAll(userId: string) {
@@ -31,9 +35,21 @@ export class CandidatesService {
           ? {}
           : {
               where: {
-                applications: { some: { companyId: userDetails.companyId } },
+                applications: {
+                  some: {
+                    companyId: userDetails.companyId,
+                    status: {
+                      in: [
+                        'approvedByCompany',
+                        'approvedByRecruiter',
+                        'waiting',
+                      ],
+                    },
+                  },
+                },
               },
             }),
+        orderBy: { createdAt: 'desc' },
       });
 
       return { success: true, candidates: allCandidates };
@@ -67,7 +83,7 @@ export class CandidatesService {
           (x) => x.companyId !== userDetails.companyId,
         )
       ) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You are not allowed to access this resource',
         );
       }
@@ -104,6 +120,59 @@ export class CandidatesService {
             select: { id: true, status: true, date: true },
           },
         },
+      });
+
+      return { success: true, candidates };
+    } catch (error) {
+      error.success = false;
+      throw error;
+    }
+  }
+
+  async findAllResumedByVacancy(userId: string, vacancyId: string) {
+    try {
+      const userDetails = await this.usersRepo.findUnique({
+        where: { id: userId },
+      });
+
+      // 1. applied ou stored
+      // 2. se a vaga
+      const candidates = await this.candidatesRepo.findMany({
+        where: {
+          OR: [
+            {
+              status: 'stored',
+            },
+            {
+              status: 'applied',
+              applications: {
+                some: {
+                  AND: [
+                    { vacancyId },
+                    {
+                      status: {
+                        in: ['approvedByRecruiter', 'approvedByCompany'],
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+          ...(userDetails.role === 'customer'
+            ? {
+                applications: {
+                  some: {
+                    companyId: userDetails.companyId,
+                    status: {
+                      in: ['approvedByRecruiter', 'approvedByCompany'],
+                    },
+                  },
+                },
+              }
+            : {}),
+        },
+        select: { id: true, name: true },
       });
 
       return { success: true, candidates };
@@ -229,9 +298,15 @@ export class CandidatesService {
         where: { id },
       });
 
-      const { resume, psycologicalTest, candidatesForm } = files;
+      const resume = files.resume || currentCandidate.resume;
+      const psycologicalTest =
+        files.psycologicalTest || currentCandidate.psycologicalTest;
+      const candidatesForm =
+        files.candidatesForm || currentCandidate.candidatesForm;
       const { cpf } = updateCandidateDto;
 
+      console.log('resume', resume);
+      console.log('typeof resume', typeof resume);
       if (!(typeof resume === 'string')) {
         await removeFileFirebase(currentCandidate.resume);
         const resumeStorageRef = ref(
@@ -324,7 +399,26 @@ export class CandidatesService {
         ...(candidatesForm ? [removeFileFirebase(candidatesForm)] : []),
       ]);
 
-      await this.candidatesRepo.delete({ where: { id } });
+      const removeInterviews = async () =>
+        await this.interviewsRepo.deleteMany({
+          where: { candidateId: id },
+        });
+
+      const removeApplications = async () => {
+        await this.applicationsRepo.deleteMany({
+          where: { candidateId: id },
+        });
+      };
+
+      const removeCandidate = async () => {
+        await this.candidatesRepo.delete({ where: { id } });
+      };
+
+      await Promise.all([
+        removeInterviews(),
+        removeApplications(),
+        removeCandidate(),
+      ]);
 
       return { success: true };
     } catch (error) {

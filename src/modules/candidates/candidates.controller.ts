@@ -29,6 +29,11 @@ export class CandidatesController {
     return this.candidatesService.findAllByVacancy(userId, id);
   }
 
+  @Get('/resumed/:id')
+  findAllResumed(@ActiveUserId() userId: string, @Param('id') id: string) {
+    return this.candidatesService.findAllResumedByVacancy(userId, id);
+  }
+
   @Get(':id')
   findOne(@ActiveUserId() userId: string, @Param('id') id: string) {
     return this.candidatesService.findOne(userId, id);

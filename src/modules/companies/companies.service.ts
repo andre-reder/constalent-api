@@ -1,8 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import admin from 'firebase-admin';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
@@ -57,7 +57,7 @@ export class CompaniesService {
       const user = await this.usersRepo.findUnique({ where: { id: userId } });
 
       if (user.role !== 'admin' && user.companyId !== id) {
-        throw new UnauthorizedException('You do not have permission to access');
+        throw new BadRequestException('You do not have permission to access');
       }
 
       const company = await this.companiesRepo.findUnique({ where: { id } });
@@ -149,7 +149,7 @@ export class CompaniesService {
       const user = await this.usersRepo.findUnique({ where: { id: userId } });
 
       if (user.role !== 'admin' && user.companyId !== id) {
-        throw new UnauthorizedException('You do not have permission to access');
+        throw new BadRequestException('You do not have permission to access');
       }
 
       const companyDetails = await this.companiesRepo.findUnique({

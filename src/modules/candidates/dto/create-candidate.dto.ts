@@ -138,6 +138,18 @@ export class CreateCandidateDto {
   lastPosition?: string;
 
   @IsString()
+  @IsOptional()
+  resume?: string;
+
+  @IsString()
+  @IsOptional()
+  psycologicalTest?: string;
+
+  @IsString()
+  @IsOptional()
+  candidatesForm?: string;
+
+  @IsString()
   @IsNotEmpty()
   @IsEnum(CandidateStatus)
   status: CandidateStatus;

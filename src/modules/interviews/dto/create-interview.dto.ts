@@ -1,8 +1,10 @@
+import { Transform } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -22,6 +24,7 @@ export enum InterviewStatus {
 export class CreateInterviewDto {
   @IsDate()
   @IsNotEmpty()
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   date: Date;
 
   @IsOptional()
@@ -53,7 +56,6 @@ export class CreateInterviewDto {
   vacancyId: string;
 
   @IsOptional()
-  @IsString()
-  @IsMongoId()
-  applicationId: string;
+  @IsNumber()
+  finalSalary?: number;
 }

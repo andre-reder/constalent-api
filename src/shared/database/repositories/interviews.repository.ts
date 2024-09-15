@@ -37,4 +37,8 @@ export class InterviewsRepository {
   delete(deleteDto: Prisma.interviewsDeleteArgs) {
     return this.prismaService.interviews.delete(deleteDto);
   }
+
+  deleteMany(deleteManyDto: Prisma.interviewsDeleteManyArgs) {
+    return this.prismaService.interviews.deleteMany(deleteManyDto);
+  }
 }

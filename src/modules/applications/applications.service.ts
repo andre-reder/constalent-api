@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { ApplicationsRepository } from 'src/shared/database/repositories/applications.repository';
 import { CandidatesRepository } from 'src/shared/database/repositories/candidates.repository';
+import { CompaniesRepository } from 'src/shared/database/repositories/companies.repository';
 import { InterviewsRepository } from 'src/shared/database/repositories/interviews.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repository';
 import { VacanciesRepository } from 'src/shared/database/repositories/vacancies.repository';
@@ -18,22 +19,30 @@ export class ApplicationsService {
     private readonly vacanciesRepo: VacanciesRepository,
     private readonly candidatesRepo: CandidatesRepository,
     private readonly interviewsRepo: InterviewsRepository,
+    private readonly companiesRepo: CompaniesRepository,
   ) {}
 
   private async handleApplicationStatusActions(
     status: ApplicationStatus,
     applicationId: string,
   ) {
-    if (status === 'waiting') {
-      return;
-    }
-
     const application = await this.applicationsRepo.findUnique({
       where: { id: applicationId },
       include: {
         interviews: { select: { id: true, type: true } },
       },
     });
+
+    const applyCandidate = async () =>
+      await this.candidatesRepo.update({
+        where: { id: application.candidateId },
+        data: { status: 'applied' },
+      });
+
+    if (status === 'waiting') {
+      await applyCandidate();
+      return;
+    }
 
     const recruiterInterview = application.interviews.find(
       (interview) => interview.type === 'recruiter',
@@ -64,6 +73,11 @@ export class ApplicationsService {
           );
         }
 
+        await this.applicationsRepo.update({
+          where: { id: applicationId },
+          data: { status },
+        });
+
         const rejectRecruiterInterview = async () =>
           await this.interviewsRepo.update({
             where: { id: recruiterInterview.id },
@@ -85,6 +99,11 @@ export class ApplicationsService {
           );
         }
 
+        await this.applicationsRepo.update({
+          where: { id: applicationId },
+          data: { status },
+        });
+
         const rejectCompanyInterview = async () =>
           await this.interviewsRepo.update({
             where: { id: companyInterview.id },
@@ -102,6 +121,19 @@ export class ApplicationsService {
       });
 
       if (status === 'approvedByCompany') {
+        const doesCompanyInterviewExist =
+          !!application.interviews &&
+          application.interviews.length > 0 &&
+          application.interviews.some(
+            (interview) => interview.type === 'company',
+          );
+
+        if (!doesCompanyInterviewExist) {
+          throw new ConflictException(
+            'This application does not have company interview, so it cannot be rejected by company',
+          );
+        }
+
         const hireCandidate = async () =>
           await this.candidatesRepo.update({
             where: { id: application.candidateId },
@@ -113,6 +145,11 @@ export class ApplicationsService {
             where: { id: companyInterview.id },
             data: { status: 'approved' },
           });
+
+        await this.applicationsRepo.update({
+          where: { id: applicationId },
+          data: { status },
+        });
 
         await Promise.all([hireCandidate(), approveCompanyInterview()]);
 
@@ -140,6 +177,36 @@ export class ApplicationsService {
             data: { status: 'finished' },
           });
         }
+      } else if (status === 'approvedByRecruiter') {
+        const doesRecuiterInterviewExist =
+          !!application.interviews &&
+          application.interviews.length > 0 &&
+          application.interviews.some(
+            (interview) => interview.type === 'recruiter',
+          );
+
+        if (!doesRecuiterInterviewExist) {
+          throw new ConflictException(
+            'This application does not have recruiter interview, so it cannot be approved by recruiter',
+          );
+        }
+
+        await this.applicationsRepo.update({
+          where: { id: applicationId },
+          data: { status },
+        });
+
+        await applyCandidate();
+      }
+
+      if (status && status === 'notContinued') {
+        const storeCandidate = async () =>
+          await this.candidatesRepo.update({
+            where: { id: application.candidateId },
+            data: { status: 'stored' },
+          });
+
+        await storeCandidate();
       }
     }
   }
@@ -177,9 +244,68 @@ export class ApplicationsService {
             },
           },
         },
+        orderBy: { id: 'desc' },
       });
 
       return { success: true, applications };
+    } catch (error) {
+      error.success = false;
+      throw error;
+    }
+  }
+
+  async findInterviews(userId: string, applicationId: string) {
+    try {
+      const userDetails = await this.usersRepo.findUnique({
+        where: { id: userId },
+      });
+
+      const isCustomer = userDetails.role === 'customer';
+      const { companyId } = userDetails;
+
+      const interviewsOfApplication = await this.interviewsRepo.findMany({
+        where: {
+          applicationId,
+          ...(isCustomer ? { companyId } : {}),
+        },
+        select: {
+          type: true,
+          aiSummary: true,
+          details: true,
+          date: true,
+          id: true,
+          status: true,
+        },
+      });
+
+      return { success: true, interviews: interviewsOfApplication };
+    } catch (error) {
+      error.success = false;
+      throw error;
+    }
+  }
+
+  async findCandidatesDocs(candidateId: string) {
+    try {
+      const candidateOfApplication = await this.candidatesRepo.findUnique({
+        where: {
+          id: candidateId,
+        },
+        select: {
+          candidatesForm: true,
+          resume: true,
+          psycologicalTest: true,
+          id: true,
+        },
+      });
+
+      const { candidatesForm, resume, psycologicalTest } =
+        candidateOfApplication;
+
+      return {
+        success: true,
+        candidatesDocs: { candidatesForm, resume, psycologicalTest },
+      };
     } catch (error) {
       error.success = false;
       throw error;
@@ -306,9 +432,33 @@ export class ApplicationsService {
 
   async update(id: string, updateApplicationDto: UpdateApplicationDto) {
     try {
-      const { status, positivePoints, negativePoints } = updateApplicationDto;
+      const { status, positivePoints, negativePoints, finalSalary } =
+        updateApplicationDto;
 
-      await this.handleApplicationStatusActions(status, id);
+      if (status) {
+        await this.handleApplicationStatusActions(status, id);
+      }
+
+      let comission: number | null = null;
+
+      if (finalSalary) {
+        const application = await this.applicationsRepo.findUnique({
+          where: { id },
+        });
+
+        const company = await this.companiesRepo.findUnique({
+          where: { id: application.companyId },
+        });
+
+        const { comissionPercentage, minComission, maxComission } = company;
+        const percentageOfSalary = finalSalary * (comissionPercentage / 100);
+        comission =
+          percentageOfSalary < minComission
+            ? minComission
+            : percentageOfSalary > maxComission
+            ? maxComission
+            : percentageOfSalary;
+      }
 
       await this.applicationsRepo.update({
         where: { id },
@@ -316,6 +466,8 @@ export class ApplicationsService {
           status,
           positivePoints,
           negativePoints,
+          recruiterComission: comission || null,
+          finalSalary: finalSalary || null,
         },
       });
 

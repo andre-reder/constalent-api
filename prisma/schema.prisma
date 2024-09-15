@@ -54,6 +54,7 @@ enum Gender {
 enum EducationLevel {
   fundamental
   medium
+  technical
   superior
   postGraduation
   master
@@ -223,6 +224,7 @@ model applications {
   positivePoints     String?
   negativePoints     String?
   status             ApplicationStatus
+  hiredAt            DateTime?
   recruiterComission Float?
   finalSalary        Float?
 
@@ -234,6 +236,8 @@ model applications {
   company     companies  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   interviews interviews[]
+
+  @@unique([candidateId, vacancyId])
 }
 
 model interviews {

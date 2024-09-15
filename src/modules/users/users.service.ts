@@ -3,7 +3,6 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import admin from 'firebase-admin';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
@@ -74,7 +73,7 @@ export class UsersService {
         userDetails.role !== 'admin' &&
         userDetails.companyId !== userToBeReturned.companyId
       ) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You are not authorized to perform this action',
         );
       }
@@ -178,7 +177,7 @@ export class UsersService {
         userDetails.companyId === userToBeRemoved.companyId;
 
       if (!isUserAdmin && !areUsersInSameCompany) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           'You are not authorized to perform this action',
         );
       }
