@@ -33,6 +33,8 @@ export class InterviewsService {
   private async handleApplicationStatusActions(
     status: ApplicationStatus,
     applicationId: string,
+    interviewId: string,
+    hired: boolean,
   ) {
     const application = await this.applicationsRepo.findUnique({
       where: { id: applicationId },
@@ -40,6 +42,10 @@ export class InterviewsService {
         interviews: { select: { id: true, type: true } },
       },
     });
+
+    const companyInterviews = application.interviews.filter(
+      (interview) => interview.type === 'company',
+    );
 
     const applyCandidate = async () =>
       await this.candidatesRepo.update({
@@ -54,10 +60,6 @@ export class InterviewsService {
 
     const recruiterInterview = application.interviews.find(
       (interview) => interview.type === 'recruiter',
-    );
-
-    const companyInterview = application.interviews.find(
-      (interview) => interview.type === 'company',
     );
 
     if (status && status.includes('rejected')) {
@@ -114,7 +116,7 @@ export class InterviewsService {
 
         const rejectCompanyInterview = async () =>
           await this.interviewsRepo.update({
-            where: { id: companyInterview.id },
+            where: { id: interviewId },
             data: { status: 'rejected' },
           });
 
@@ -142,47 +144,54 @@ export class InterviewsService {
           );
         }
 
-        const hireCandidate = async () =>
-          await this.candidatesRepo.update({
-            where: { id: application.candidateId },
-            data: { status: 'hired' },
+        if (hired) {
+          const hireCandidate = async () =>
+            await this.candidatesRepo.update({
+              where: { id: application.candidateId },
+              data: { status: 'hired' },
+            });
+
+          const approveCompanyInterviews = async () =>
+            await this.interviewsRepo.updateMany({
+              where: { id: { in: companyInterviews.map((x) => x.id) } },
+              data: { status: 'approved' },
+            });
+
+          await this.applicationsRepo.update({
+            where: { id: applicationId },
+            data: { status },
           });
 
-        const approveCompanyInterview = async () =>
+          await Promise.all([hireCandidate(), approveCompanyInterviews()]);
+
+          const getCurrentHiredApplicationsForVacancy = async () =>
+            await this.applicationsRepo.findMany({
+              where: {
+                status: 'approvedByCompany',
+                vacancyId: application.vacancyId,
+              },
+            });
+
+          const getVacancyDetails = async () =>
+            await this.vacanciesRepo.findUnique({
+              where: { id: application.vacancyId },
+            });
+
+          const [hiredApplications, vacancyDetails] = await Promise.all([
+            getCurrentHiredApplicationsForVacancy(),
+            getVacancyDetails(),
+          ]);
+
+          if (vacancyDetails.vacanciesAmount <= hiredApplications.length) {
+            await this.vacanciesRepo.update({
+              where: { id: application.vacancyId },
+              data: { status: 'finished' },
+            });
+          }
+        } else {
           await this.interviewsRepo.update({
-            where: { id: companyInterview.id },
+            where: { id: interviewId },
             data: { status: 'approved' },
-          });
-
-        await this.applicationsRepo.update({
-          where: { id: applicationId },
-          data: { status },
-        });
-
-        await Promise.all([hireCandidate(), approveCompanyInterview()]);
-
-        const getCurrentHiredApplicationsForVacancy = async () =>
-          await this.applicationsRepo.findMany({
-            where: {
-              status: 'approvedByCompany',
-              vacancyId: application.vacancyId,
-            },
-          });
-
-        const getVacancyDetails = async () =>
-          await this.vacanciesRepo.findUnique({
-            where: { id: application.vacancyId },
-          });
-
-        const [hiredApplications, vacancyDetails] = await Promise.all([
-          getCurrentHiredApplicationsForVacancy(),
-          getVacancyDetails(),
-        ]);
-
-        if (vacancyDetails.vacanciesAmount <= hiredApplications.length) {
-          await this.vacanciesRepo.update({
-            where: { id: application.vacancyId },
-            data: { status: 'finished' },
           });
         }
       } else if (status === 'approvedByRecruiter') {
@@ -202,6 +211,11 @@ export class InterviewsService {
         await this.applicationsRepo.update({
           where: { id: applicationId },
           data: { status },
+        });
+
+        await this.interviewsRepo.update({
+          where: { id: recruiterInterview.id },
+          data: { status: 'approved' },
         });
 
         await applyCandidate();
@@ -297,8 +311,15 @@ export class InterviewsService {
 
   async create(createInterviewDto: CreateInterviewDto) {
     try {
-      const { candidateId, vacancyId, status, type, finalSalary, ...rest } =
-        createInterviewDto;
+      const {
+        candidateId,
+        vacancyId,
+        status,
+        type,
+        finalSalary,
+        hired,
+        ...rest
+      } = createInterviewDto;
 
       const vacancyDetails = await this.vacanciesRepo.findUnique({
         where: { id: vacancyId },
@@ -354,6 +375,8 @@ export class InterviewsService {
       await this.handleApplicationStatusActions(
         applicationStatus,
         interview.applicationId,
+        interview.id,
+        hired,
       );
 
       if (finalSalary) {
@@ -390,7 +413,7 @@ export class InterviewsService {
       });
 
       const { status: currentStatus } = interview;
-      const { status, type, ...rest } = updateInterviewDto;
+      const { status, type, hired, ...rest } = updateInterviewDto;
 
       const interviewStatusToApplicationStatusMap = {
         scheduled: 'waiting',
@@ -415,7 +438,9 @@ export class InterviewsService {
       if (isChangingStatus) {
         await this.handleApplicationStatusActions(
           interviewStatusToApplicationStatusMap[status],
+          interview.applicationId,
           id,
+          hired,
         );
       }
 

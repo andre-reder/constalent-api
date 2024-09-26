@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ActiveUserId } from 'src/shared/decorators/ActiveUserId';
 import { ApplicationsService } from './applications.service';
@@ -28,6 +29,14 @@ export class ApplicationsController {
   @Get('/candidatesDocs/:id')
   findCandidatesDocs(@Param('id') id: string) {
     return this.applicationsService.findCandidatesDocs(id);
+  }
+
+  @Get('/candidateVacancy')
+  findOneByVacancyAndCandidate(
+    @Query('vacancyId') vacancyId: string,
+    @Query('candidateId') candidateId: string,
+  ) {
+    return this.applicationsService.findOne(vacancyId, candidateId);
   }
 
   @Get(':id')

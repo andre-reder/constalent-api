@@ -48,9 +48,12 @@ export class ApplicationsService {
       (interview) => interview.type === 'recruiter',
     );
 
-    const companyInterview = application.interviews.find(
+    const companyInterviews = application.interviews.filter(
       (interview) => interview.type === 'company',
     );
+
+    const lastCompanyInterview =
+      companyInterviews[companyInterviews.length - 1];
 
     if (status && status.includes('rejected')) {
       const storeCandidate = async () =>
@@ -104,13 +107,13 @@ export class ApplicationsService {
           data: { status },
         });
 
-        const rejectCompanyInterview = async () =>
+        const rejectLastCompanyInterview = async () =>
           await this.interviewsRepo.update({
-            where: { id: companyInterview.id },
+            where: { id: lastCompanyInterview.id },
             data: { status: 'rejected' },
           });
 
-        await Promise.all([rejectCompanyInterview(), storeCandidate()]);
+        await Promise.all([rejectLastCompanyInterview(), storeCandidate()]);
       }
     }
 
@@ -140,9 +143,9 @@ export class ApplicationsService {
             data: { status: 'hired' },
           });
 
-        const approveCompanyInterview = async () =>
-          await this.interviewsRepo.update({
-            where: { id: companyInterview.id },
+        const approveCompanyInterviews = async () =>
+          await this.interviewsRepo.updateMany({
+            where: { id: { in: companyInterviews.map((x) => x.id) } },
             data: { status: 'approved' },
           });
 
@@ -151,7 +154,7 @@ export class ApplicationsService {
           data: { status },
         });
 
-        await Promise.all([hireCandidate(), approveCompanyInterview()]);
+        await Promise.all([hireCandidate(), approveCompanyInterviews()]);
 
         const getCurrentHiredApplicationsForVacancy = async () =>
           await this.applicationsRepo.findMany({
@@ -345,6 +348,21 @@ export class ApplicationsService {
               name: true,
             },
           },
+        },
+      });
+
+      return { success: true, application };
+    } catch (error) {
+      error.success = false;
+      throw error;
+    }
+  }
+
+  async findOneByVacancyAndCandidate(vacancyId: string, candidateId: string) {
+    try {
+      const application = await this.applicationsRepo.findUnique({
+        where: {
+          candidateId_vacancyId: { candidateId, vacancyId },
         },
       });
 

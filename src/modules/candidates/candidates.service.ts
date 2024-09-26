@@ -151,7 +151,11 @@ export class CandidatesService {
                     { vacancyId },
                     {
                       status: {
-                        in: ['approvedByRecruiter', 'approvedByCompany'],
+                        in: [
+                          'approvedByRecruiter',
+                          'approvedByCompany',
+                          'waiting',
+                        ],
                       },
                     },
                   ],
@@ -165,7 +169,11 @@ export class CandidatesService {
                   some: {
                     companyId: userDetails.companyId,
                     status: {
-                      in: ['approvedByRecruiter', 'approvedByCompany'],
+                      in: [
+                        'approvedByRecruiter',
+                        'approvedByCompany',
+                        'waiting',
+                      ],
                     },
                   },
                 },

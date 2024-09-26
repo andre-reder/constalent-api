@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsDate,
   IsEnum,
   IsMongoId,
@@ -58,4 +59,7 @@ export class CreateInterviewDto {
   @IsOptional()
   @IsNumber()
   finalSalary?: number;
+
+  @IsBoolean()
+  hired: boolean;
 }
