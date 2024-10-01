@@ -104,6 +104,10 @@ export class CreateCandidateDto {
 
   @IsString()
   @IsOptional()
+  complement?: string;
+
+  @IsString()
+  @IsOptional()
   district?: string;
 
   @IsString()

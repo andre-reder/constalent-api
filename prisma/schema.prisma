@@ -204,6 +204,7 @@ model candidates {
   rg               String          @unique()
   cep              String?
   streetNumber     Int?
+  complement       String?
   streetName       String?
   district         String?
   city             String?

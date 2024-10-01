@@ -61,5 +61,6 @@ export class CreateInterviewDto {
   finalSalary?: number;
 
   @IsBoolean()
+  @Transform(({ value }) => JSON.parse(value))
   hired: boolean;
 }
