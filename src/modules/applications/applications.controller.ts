@@ -36,7 +36,10 @@ export class ApplicationsController {
     @Query('vacancyId') vacancyId: string,
     @Query('candidateId') candidateId: string,
   ) {
-    return this.applicationsService.findOne(vacancyId, candidateId);
+    return this.applicationsService.findOneByVacancyAndCandidate(
+      vacancyId,
+      candidateId,
+    );
   }
 
   @Get(':id')
