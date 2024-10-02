@@ -25,6 +25,7 @@ enum Gender {
 enum EducationLevel {
   fundamental = 'fundamental',
   medium = 'medium',
+  technical = 'technical',
   superior = 'superior',
   postGraduation = 'postGraduation',
   master = 'master',
