@@ -81,6 +81,7 @@ enum ApplicationStatus {
   notContinued
   rejectedByRecruiter
   approvedByRecruiter
+  standby
   rejectedByCompany
   approvedByCompany
 }
@@ -93,6 +94,7 @@ enum InterviewType {
 enum InterviewStatus {
   scheduled
   canceled
+  standby
   approved
   rejected
 }

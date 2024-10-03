@@ -15,6 +15,7 @@ enum ApplicationStatus {
   waiting = 'waiting',
   rejectedByRecruiter = 'rejectedByRecruiter',
   approvedByRecruiter = 'approvedByRecruiter',
+  standby = 'standby',
   rejectedByCompany = 'rejectedByCompany',
   approvedByCompany = 'approvedByCompany',
 }
@@ -187,6 +188,66 @@ export class InterviewsService {
               where: { id: application.vacancyId },
               data: { status: 'finished' },
             });
+
+            const hiredCandidates = [
+              ...hiredApplications.map((x) => x.candidateId),
+              application.candidateId,
+            ];
+
+            const allCandidatesAppliedForVacancy =
+              await this.candidatesRepo.findMany({
+                where: { applications: { some: { id: application.id } } },
+                include: {
+                  applications: {
+                    select: { status: true, id: true },
+                  },
+                },
+              });
+
+            const candidatesToStore: string[] = [];
+
+            allCandidatesAppliedForVacancy.forEach((candidate) => {
+              const isCandidateHired = hiredCandidates.includes(candidate.id);
+
+              if (isCandidateHired) return;
+
+              const notInHiringStatus = [
+                'notContinued',
+                'rejectedByCompany',
+                'rejectedByRecruiter',
+              ];
+
+              const isCandidateInHiringProcess = candidate.applications.some(
+                (apl) =>
+                  !notInHiringStatus.includes(apl.status) &&
+                  apl.id !== application.id,
+              );
+
+              if (isCandidateInHiringProcess) return;
+
+              candidatesToStore.push(candidate.id);
+            });
+
+            await this.candidatesRepo.updateMany({
+              where: {
+                id: {
+                  in: candidatesToStore,
+                },
+                applications: {
+                  some: { id: applicationId },
+                },
+              },
+              data: { status: 'stored' },
+            });
+
+            await this.applicationsRepo.updateMany({
+              where: {
+                vacancyId: application.vacancyId,
+                candidateId: { not: application.candidateId },
+                status: { not: 'approvedByCompany' },
+              },
+              data: { status: 'notContinued' },
+            });
           }
         } else {
           await this.interviewsRepo.update({
@@ -220,6 +281,18 @@ export class InterviewsService {
 
         await applyCandidate();
       }
+    }
+
+    if (status && status === 'standby') {
+      await this.interviewsRepo.update({
+        where: { id: recruiterInterview.id },
+        data: { status: 'standby' },
+      });
+
+      await this.applicationsRepo.update({
+        where: { id: applicationId },
+        data: { status },
+      });
     }
   }
 

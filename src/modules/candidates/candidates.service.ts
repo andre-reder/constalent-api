@@ -49,7 +49,8 @@ export class CandidatesService {
                 },
               },
             }),
-        orderBy: { createdAt: 'desc' },
+        // orderBy: { createdAt: 'desc' },
+        orderBy: { name: 'asc' },
       });
 
       return { success: true, candidates: allCandidates };

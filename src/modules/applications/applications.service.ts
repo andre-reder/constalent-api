@@ -179,6 +179,66 @@ export class ApplicationsService {
             where: { id: application.vacancyId },
             data: { status: 'finished' },
           });
+
+          const hiredCandidates = [
+            ...hiredApplications.map((x) => x.candidateId),
+            application.candidateId,
+          ];
+
+          const allCandidatesAppliedForVacancy =
+            await this.candidatesRepo.findMany({
+              where: { applications: { some: { id: application.id } } },
+              include: {
+                applications: {
+                  select: { status: true, id: true },
+                },
+              },
+            });
+
+          const candidatesToStore: string[] = [];
+
+          allCandidatesAppliedForVacancy.forEach((candidate) => {
+            const isCandidateHired = hiredCandidates.includes(candidate.id);
+
+            if (isCandidateHired) return;
+
+            const notInHiringStatus = [
+              'notContinued',
+              'rejectedByCompany',
+              'rejectedByRecruiter',
+            ];
+
+            const isCandidateInHiringProcess = candidate.applications.some(
+              (apl) =>
+                !notInHiringStatus.includes(apl.status) &&
+                apl.id !== application.id,
+            );
+
+            if (isCandidateInHiringProcess) return;
+
+            candidatesToStore.push(candidate.id);
+          });
+
+          await this.candidatesRepo.updateMany({
+            where: {
+              id: {
+                in: candidatesToStore,
+              },
+              applications: {
+                some: { id: applicationId },
+              },
+            },
+            data: { status: 'stored' },
+          });
+
+          await this.applicationsRepo.updateMany({
+            where: {
+              vacancyId: application.vacancyId,
+              candidateId: { not: application.candidateId },
+              status: { not: 'approvedByCompany' },
+            },
+            data: { status: 'notContinued' },
+          });
         }
       } else if (status === 'approvedByRecruiter') {
         const doesRecuiterInterviewExist =
@@ -201,16 +261,23 @@ export class ApplicationsService {
 
         await applyCandidate();
       }
+    }
 
-      if (status && status === 'notContinued') {
-        const storeCandidate = async () =>
-          await this.candidatesRepo.update({
-            where: { id: application.candidateId },
-            data: { status: 'stored' },
-          });
+    if (status && status === 'standby') {
+      await this.applicationsRepo.update({
+        where: { id: applicationId },
+        data: { status },
+      });
+    }
 
-        await storeCandidate();
-      }
+    if (status && status === 'notContinued') {
+      const storeCandidate = async () =>
+        await this.candidatesRepo.update({
+          where: { id: application.candidateId },
+          data: { status: 'stored' },
+        });
+
+      await storeCandidate();
     }
   }
 
@@ -298,16 +365,28 @@ export class ApplicationsService {
           candidatesForm: true,
           resume: true,
           psycologicalTest: true,
+          portfolio: true,
+          isPortfolioFile: true,
           id: true,
         },
       });
 
-      const { candidatesForm, resume, psycologicalTest } =
-        candidateOfApplication;
+      const {
+        candidatesForm,
+        resume,
+        psycologicalTest,
+        portfolio,
+        isPortfolioFile,
+      } = candidateOfApplication;
 
       return {
         success: true,
-        candidatesDocs: { candidatesForm, resume, psycologicalTest },
+        candidatesDocs: {
+          candidatesForm,
+          resume,
+          psycologicalTest,
+          ...(isPortfolioFile ? { portfolio } : {}),
+        },
       };
     } catch (error) {
       error.success = false;

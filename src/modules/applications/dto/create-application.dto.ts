@@ -11,6 +11,7 @@ export enum ApplicationStatus {
   waiting = 'waiting',
   rejectedByRecruiter = 'rejectedByRecruiter',
   approvedByRecruiter = 'approvedByRecruiter',
+  standby = 'standby',
   rejectedByCompany = 'rejectedByCompany',
   approvedByCompany = 'approvedByCompany',
   notContinued = 'notContinued',
