@@ -187,35 +187,41 @@ model vacancies {
 }
 
 model candidates {
-  id               String          @id @default(auto()) @map("_id") @db.ObjectId
-  name             String
-  email            String          @unique()
-  phone            String
-  linkedin         String?
-  resume           String
-  psycologicalTest String?
-  candidatesForm   String?
-  salaryExpected   Float
-  birthDate        DateTime
-  gender           Gender
-  educationLevel   EducationLevel
-  graduationCourse String?
-  cpf              String          @unique()
-  rg               String          @unique()
-  cep              String?
-  streetNumber     Int?
-  complement       String?
-  streetName       String?
-  district         String?
-  city             String?
-  uf               String?
-  maritalStatus    MaritalStatus
-  childrenAmount   Int
-  lastSalary       Float?
-  lastCompany      String?
-  lastPosition     String?
-  status           CandidateStatus
-  createdAt        DateTime
+  id                         String          @id @default(auto()) @map("_id") @db.ObjectId
+  name                       String
+  email                      String          @unique()
+  phone                      String
+  linkedin                   String?
+  resume                     String
+  psycologicalTest           String?
+  candidatesForm             String?
+  salaryExpected             Float?
+  birthDate                  DateTime
+  gender                     Gender
+  educationLevel             EducationLevel
+  graduationCourse           String?
+  cpf                        String          @unique()
+  rg                         String          @unique()
+  cep                        String?
+  streetNumber               Int?
+  complement                 String?
+  streetName                 String?
+  district                   String?
+  city                       String?
+  uf                         String?
+  maritalStatus              MaritalStatus
+  childrenAmount             Int
+  lastSalary                 Float?
+  lastCompany                String?
+  lastPosition               String?
+  isRegularWithGovernmentTax Boolean         @default(true)
+  hasCriminalRecord          Boolean         @default(false)
+  sentenceServed             Boolean         @default(false)
+  courtCases                 String[]
+  portfolio                  String?
+  isPortfolioFile            Boolean?        @default(false)
+  status                     CandidateStatus
+  createdAt                  DateTime
 
   interviews   interviews[]
   applications applications[]

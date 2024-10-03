@@ -1,5 +1,7 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
+  IsBoolean,
   IsDate,
   IsEmail,
   IsEnum,
@@ -59,9 +61,9 @@ export class CreateCandidateDto {
   linkedin?: string;
 
   @IsNumber()
-  @IsNotEmpty()
-  @Transform(({ value }) => Number(value))
-  salaryExpected: number;
+  @IsOptional()
+  @Transform(({ value }) => Number(value) || undefined)
+  salaryExpected?: number;
 
   @IsNotEmpty()
   @IsDate()
@@ -158,4 +160,25 @@ export class CreateCandidateDto {
   @IsNotEmpty()
   @IsEnum(CandidateStatus)
   status: CandidateStatus;
+
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  isRegularWithGovernmentTax: boolean;
+
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  hasCriminalRecord: boolean;
+
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  sentenceServed: boolean;
+
+  @IsArray()
+  @Transform(({ value }) => JSON.parse(value))
+  @IsOptional()
+  courtCases: string[];
+
+  @IsString()
+  @IsOptional()
+  portfolio?: string;
 }

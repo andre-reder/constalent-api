@@ -46,6 +46,7 @@ export class CandidatesController {
       { name: 'resume', maxCount: 1 },
       { name: 'psycologicalTest', maxCount: 1 },
       { name: 'candidatesForm', maxCount: 1 },
+      { name: 'portfolio', maxCount: 1 },
     ]),
   )
   create(
@@ -55,6 +56,7 @@ export class CandidatesController {
       resume: Express.Multer.File[];
       psycologicalTest: Express.Multer.File[];
       candidatesForm: Express.Multer.File[];
+      portfolio?: Express.Multer.File[];
     },
   ) {
     return this.candidatesService.create(createCandidateDto, files);
@@ -67,6 +69,7 @@ export class CandidatesController {
       { name: 'resume', maxCount: 1 },
       { name: 'psycologicalTest', maxCount: 1 },
       { name: 'candidatesForm', maxCount: 1 },
+      { name: 'portfolio', maxCount: 1 },
     ]),
   )
   update(
@@ -77,6 +80,7 @@ export class CandidatesController {
       resume: Express.Multer.File[];
       psycologicalTest: Express.Multer.File[];
       candidatesForm: Express.Multer.File[];
+      portfolio?: Express.Multer.File[];
     },
   ) {
     return this.candidatesService.update(id, updateCandidateDto, files);

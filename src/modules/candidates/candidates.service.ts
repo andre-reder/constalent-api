@@ -196,11 +196,15 @@ export class CandidatesService {
       resume: Express.Multer.File[];
       psycologicalTest: Express.Multer.File[];
       candidatesForm: Express.Multer.File[];
+      portfolio?: Express.Multer.File[];
     },
   ) {
     let psycologicalTestUrl = '';
     let candidatesFormUrl = '';
     let resumeUrl = '';
+    let portfolioUrl = '';
+    let portfolioType = 'url';
+
     try {
       const { email, cpf, rg } = createCandidateDto;
 
@@ -221,7 +225,7 @@ export class CandidatesService {
         );
       }
 
-      const { resume, psycologicalTest, candidatesForm } = files;
+      const { resume, psycologicalTest, candidatesForm, portfolio } = files;
 
       const resumeStorageRef = ref(
         getStorage(),
@@ -259,6 +263,19 @@ export class CandidatesService {
         candidatesFormUrl = await getDownloadURL(candidatesFormSnapshot.ref);
       }
 
+      if (portfolio && portfolio[0]) {
+        const portfolioStorageRef = ref(
+          getStorage(),
+          `candidates-files/${cpf}/portfolio/${portfolio[0].originalname}`,
+        );
+        const portfolioSnapshot = await uploadBytes(
+          portfolioStorageRef,
+          Buffer.from(portfolio[0].buffer),
+        );
+        portfolioUrl = await getDownloadURL(portfolioSnapshot.ref);
+        portfolioType = 'file';
+      }
+
       const transformedCreateCandidateDto = plainToClass(
         CreateCandidateDto,
         createCandidateDto,
@@ -270,6 +287,8 @@ export class CandidatesService {
           resume: resumeUrl,
           psycologicalTest: psycologicalTestUrl,
           candidatesForm: candidatesFormUrl,
+          ...(portfolioUrl ? { portfolio: portfolioUrl } : {}),
+          isPortfolioFile: portfolioType === 'file',
           createdAt: new Date(),
         },
       });
@@ -283,6 +302,7 @@ export class CandidatesService {
           ? [removeFileFirebase(psycologicalTestUrl)]
           : []),
         ...(candidatesFormUrl ? [removeFileFirebase(candidatesFormUrl)] : []),
+        ...(portfolioUrl ? [removeFileFirebase(portfolioUrl)] : []),
       ]);
       error.success = false;
       throw error;
@@ -296,21 +316,32 @@ export class CandidatesService {
       resume: Express.Multer.File[];
       psycologicalTest: Express.Multer.File[];
       candidatesForm: Express.Multer.File[];
+      portfolio?: Express.Multer.File[];
     },
   ) {
     let psycologicalTestUrl = '';
     let candidatesFormUrl = '';
     let resumeUrl = '';
+    let portfolioUrl = '';
+    let portfolioType = 'url';
+
     try {
       const currentCandidate = await this.candidatesRepo.findUnique({
         where: { id },
       });
+
+      portfolioUrl = currentCandidate.portfolio;
 
       const resume = files.resume || currentCandidate.resume;
       const psycologicalTest =
         files.psycologicalTest || currentCandidate.psycologicalTest;
       const candidatesForm =
         files.candidatesForm || currentCandidate.candidatesForm;
+      const portfolio =
+        files.portfolio ||
+        currentCandidate.portfolio ||
+        updateCandidateDto.portfolio ||
+        '';
       const { cpf } = updateCandidateDto;
 
       console.log('resume', resume);
@@ -370,6 +401,27 @@ export class CandidatesService {
         candidatesFormUrl = currentCandidate.candidatesForm;
       }
 
+      if (portfolio && !(typeof portfolio === 'string') && portfolio[0]) {
+        if (currentCandidate.isPortfolioFile) {
+          await removeFileFirebase(currentCandidate.portfolio);
+        }
+
+        const portfolioStorageRef = ref(
+          getStorage(),
+          `candidates-files/${cpf}/portfolio/${portfolio[0].originalname}`,
+        );
+        const portfolioSnapshot = await uploadBytes(
+          portfolioStorageRef,
+          Buffer.from(portfolio[0].buffer),
+        );
+        portfolioUrl = await getDownloadURL(portfolioSnapshot.ref);
+        portfolioType = 'file';
+      } else {
+        portfolioUrl =
+          updateCandidateDto.portfolio || currentCandidate.portfolio;
+        portfolioType = 'url';
+      }
+
       const transformedUpdateCandidateDto = plainToClass(
         UpdateCandidateDto,
         updateCandidateDto,
@@ -382,6 +434,8 @@ export class CandidatesService {
           resume: resumeUrl,
           psycologicalTest: psycologicalTestUrl,
           candidatesForm: candidatesFormUrl,
+          portfolio: portfolioUrl,
+          isPortfolioFile: portfolioType === 'file',
         },
       });
 
@@ -398,13 +452,21 @@ export class CandidatesService {
         where: { id },
       });
 
-      const { resume, psycologicalTest, candidatesForm } =
-        candidateBeingDeleted;
+      const {
+        resume,
+        psycologicalTest,
+        candidatesForm,
+        portfolio,
+        isPortfolioFile,
+      } = candidateBeingDeleted;
 
       await Promise.all([
         removeFileFirebase(resume),
         ...(psycologicalTest ? [removeFileFirebase(psycologicalTest)] : []),
         ...(candidatesForm ? [removeFileFirebase(candidatesForm)] : []),
+        ...(isPortfolioFile && portfolio
+          ? [removeFileFirebase(portfolio)]
+          : []),
       ]);
 
       const removeInterviews = async () =>
