@@ -174,7 +174,6 @@ export class CreateCandidateDto {
   sentenceServed: boolean;
 
   @IsArray()
-  @Transform(({ value }) => JSON.parse(value))
   @IsOptional()
   courtCases: string[];
 
