@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
 import {
   IsArray,
@@ -175,6 +176,19 @@ export class CreateCandidateDto {
 
   @IsArray()
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      // Se for um array vazio como string, retorna um array vazio
+      if (value === '[]') return [];
+
+      try {
+        return JSON.parse(value); // Tenta fazer o parse apenas se for uma string JSON válida
+      } catch (e) {
+        throw new BadRequestException('Invalid JSON format for courtCases');
+      }
+    }
+    return value; // Caso o valor já esteja no formato esperado (array), retorna diretamente
+  })
   courtCases: string[];
 
   @IsString()
