@@ -192,6 +192,8 @@ export class VacanciesService {
         );
       }
 
+      delete updateVacancyDto.companyId;
+
       await this.vacanciesRepo.update({
         where: { id },
         data: {

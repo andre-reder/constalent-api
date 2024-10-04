@@ -486,7 +486,9 @@ export class InterviewsService {
       });
 
       const { status: currentStatus } = interview;
-      const { status, type, hired, ...rest } = updateInterviewDto;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { status, type, hired, vacancyId, candidateId, ...rest } =
+        updateInterviewDto;
 
       const interviewStatusToApplicationStatusMap = {
         scheduled: 'waiting',
