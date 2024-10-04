@@ -487,8 +487,15 @@ export class InterviewsService {
 
       const { status: currentStatus } = interview;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { status, type, hired, vacancyId, candidateId, ...rest } =
-        updateInterviewDto;
+      const {
+        status,
+        type,
+        hired,
+        vacancyId,
+        candidateId,
+        finalSalary,
+        ...rest
+      } = updateInterviewDto;
 
       const interviewStatusToApplicationStatusMap = {
         scheduled: 'waiting',
@@ -517,6 +524,13 @@ export class InterviewsService {
           id,
           hired,
         );
+      }
+
+      if (finalSalary) {
+        await this.applicationsRepo.update({
+          where: { id: interview.applicationId },
+          data: { finalSalary },
+        });
       }
 
       return { success: true };
