@@ -6,22 +6,23 @@ import admin, { ServiceAccount } from 'firebase-admin';
 import { initializeApp } from 'firebase/app';
 import serviceAccount from '../constalent-sdk.json';
 import { AppModule } from './app.module';
+import { env } from './shared/config/env';
 import { ErrorResponseFilter } from './shared/filters/error-response.filter';
 
 async function bootstrap() {
   const firebaseConfig = {
-    apiKey: 'AIzaSyD2_xZcROy5PmjAjLD1ggHmosoX0sGaqGg',
-    authDomain: 'constalent-35e52.firebaseapp.com',
-    projectId: 'constalent-35e52',
-    storageBucket: 'constalent-35e52.appspot.com',
-    messagingSenderId: '924894933881',
-    appId: '1:924894933881:web:02c847e8a157f3261e35a8',
+    apiKey: env.firebaseApiKey,
+    authDomain: env.firebaseAuthDomain,
+    projectId: env.firebaseProjectId,
+    storageBucket: env.firebaseStorageBucket,
+    messagingSenderId: env.firebaseMessagingSenderId,
+    appId: env.firebaseAppId,
   };
   initializeApp(firebaseConfig);
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount as ServiceAccount),
-    storageBucket: 'constalent-35e52.appspot.com',
+    storageBucket: env.firebaseStorageBucket,
   });
 
   const app = await NestFactory.create(AppModule);

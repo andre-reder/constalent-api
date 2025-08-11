@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ConflictException, Injectable } from '@nestjs/common';
 import { ApplicationsRepository } from 'src/shared/database/repositories/applications.repository';
 import { CandidatesRepository } from 'src/shared/database/repositories/candidates.repository';
@@ -486,7 +487,6 @@ export class InterviewsService {
       });
 
       const { status: currentStatus } = interview;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const {
         status,
         type,
