@@ -1,0 +1,281 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table users {
+  id String [pk]
+  name String [not null]
+  email String [unique, not null]
+  authId String [unique, not null]
+  role UserRole [not null]
+  companyId String
+  company companies
+}
+
+Table companies {
+  id String [pk]
+  cnpj String [unique, not null]
+  name String [not null]
+  fantasyName String [not null]
+  email String [not null]
+  phone String [not null]
+  contactName String [not null]
+  contactRole String [not null]
+  cep String [not null]
+  streetName String [not null]
+  streetNumber Int
+  district String [not null]
+  city String [not null]
+  uf String [not null]
+  minComission Int [not null]
+  maxComission Int [not null]
+  comissionPercentage Int [not null]
+  users users [not null]
+  vacancies vacancies [not null]
+  interviews interviews [not null]
+  applications applications [not null]
+}
+
+Table vacancies {
+  id String [pk]
+  title String [not null]
+  department String [not null]
+  locationCep String
+  operatingModel OperatingModel [not null]
+  contractType ContractType [not null]
+  description String [not null]
+  additionalInfo String
+  level VacancyLevel [not null]
+  minSalary Float [not null]
+  maxSalary Float [not null]
+  hasVariableComissions Boolean [not null, default: false]
+  responsibleName String [not null]
+  responsiblePhone String [not null]
+  responsibleEmail String [not null]
+  reasonForOpening String [not null]
+  isSecret Boolean [not null, default: false]
+  vacanciesAmount Int [not null]
+  subordinatesAmount Int
+  workingSchedule String [not null]
+  needsTravel Boolean [not null, default: false]
+  needsExtraHours Boolean [not null, default: false]
+  minAge Int [not null]
+  maxAge Int [not null]
+  gender Gender [not null]
+  educationLevel EducationLevel
+  benefits String[] [not null]
+  otherBenefits String
+  minExperience Int
+  desirableExperience Int
+  necessaryRequirements String [not null]
+  desirableRequirements String
+  willApplicantBeTested Boolean [not null, default: false]
+  alignmentMeetingDate DateTime
+  suggestionsOfAlignmentMeetingDates DateTime[] [not null]
+  createdAt DateTime [not null]
+  openedAt DateTime
+  finishedAt DateTime
+  canceledAt DateTime
+  isReposition Boolean [not null, default: false]
+  status VacancyStatus [not null]
+  companyId String [not null]
+  company companies [not null]
+  interviews interviews [not null]
+  applications applications [not null]
+}
+
+Table candidates {
+  id String [pk]
+  name String [not null]
+  email String [unique, not null]
+  phone String [not null]
+  linkedin String
+  resume String [not null]
+  psycologicalTest String
+  candidatesForm String
+  salaryExpected Float
+  birthDate DateTime [not null]
+  gender Gender [not null]
+  educationLevel EducationLevel [not null]
+  graduationCourse String
+  cpf String [unique, not null]
+  rg String [unique, not null]
+  cep String
+  streetNumber Int
+  complement String
+  streetName String
+  district String
+  city String
+  uf String
+  maritalStatus MaritalStatus [not null]
+  childrenAmount Int [not null]
+  lastSalary Float
+  lastCompany String
+  lastPosition String
+  isRegularWithGovernmentTax Boolean [not null, default: true]
+  hasCriminalRecord Boolean [not null, default: false]
+  sentenceServed Boolean [not null, default: false]
+  courtCases String[] [not null]
+  portfolio String
+  isPortfolioFile Boolean [default: false]
+  status CandidateStatus [not null]
+  createdAt DateTime [not null]
+  interviews interviews [not null]
+  applications applications [not null]
+}
+
+Table applications {
+  id String [pk]
+  date DateTime [not null]
+  positivePoints String
+  negativePoints String
+  status ApplicationStatus [not null]
+  hiredAt DateTime
+  recruiterComission Float
+  finalSalary Float
+  candidateId String [not null]
+  candidate candidates [not null]
+  vacancyId String [not null]
+  vacancy vacancies [not null]
+  companyId String [not null]
+  company companies [not null]
+  interviews interviews [not null]
+
+  indexes {
+    (candidateId, vacancyId) [unique]
+  }
+}
+
+Table interviews {
+  id String [pk]
+  createdAt DateTime [not null]
+  date DateTime [not null]
+  details String
+  aiSummary String
+  relatory String
+  type InterviewType [not null]
+  status InterviewStatus [not null]
+  companyId String [not null]
+  company companies [not null]
+  candidateId String [not null]
+  candidate candidates [not null]
+  vacancyId String [not null]
+  vacancy vacancies [not null]
+  applicationId String [not null]
+  application applications [not null]
+
+  indexes {
+    (candidateId, vacancyId, type) [unique]
+  }
+}
+
+Enum UserRole {
+  admin
+  customer
+}
+
+Enum VacancyLevel {
+  youngApprentice
+  internship
+  trainee
+  auxiliary
+  assistant
+  junior
+  pleno
+  senior
+  supervisor
+  coordinator
+  manager
+  director
+  notApplicable
+}
+
+Enum OperatingModel {
+  remote
+  hybrid
+  presential
+}
+
+Enum ContractType {
+  internship
+  youngApprentice
+  clt
+  pj
+}
+
+Enum Gender {
+  male
+  female
+  indistinct
+}
+
+Enum EducationLevel {
+  fundamental
+  medium
+  technical
+  superior
+  postGraduation
+  master
+  doctorate
+}
+
+Enum VacancyStatus {
+  waiting
+  open
+  canceled
+  finished
+}
+
+Enum CandidateStatus {
+  stored
+  applied
+  hired
+}
+
+Enum ApplicationStatus {
+  waiting
+  notContinued
+  rejectedByRecruiter
+  approvedByRecruiter
+  standby
+  rejectedByCompany
+  approvedByCompany
+}
+
+Enum InterviewType {
+  recruiter
+  company
+}
+
+Enum InterviewStatus {
+  scheduled
+  canceled
+  standby
+  approved
+  rejected
+}
+
+Enum MaritalStatus {
+  single
+  married
+  divorced
+  widowed
+}
+
+Ref: users.companyId > companies.id [delete: Cascade]
+
+Ref: vacancies.companyId > companies.id [delete: Cascade]
+
+Ref: applications.candidateId > candidates.id [delete: Cascade]
+
+Ref: applications.vacancyId > vacancies.id [delete: Cascade]
+
+Ref: applications.companyId > companies.id [delete: Cascade]
+
+Ref: interviews.companyId > companies.id [delete: Cascade]
+
+Ref: interviews.candidateId > candidates.id [delete: Cascade]
+
+Ref: interviews.vacancyId > vacancies.id [delete: Cascade]
+
+Ref: interviews.applicationId > applications.id [delete: Cascade]
