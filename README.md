@@ -68,7 +68,7 @@ yarn start:dev
 ## 🌐 Acesso ao sistema completo
 Para facilitar a validação, o sistema está disponível no seguinte link:
 
-https://netlify.constalent.com
+https://constalent.netlify.app/
 
 Acesse o site se autenticando com as seguintes Credenciais:
 
