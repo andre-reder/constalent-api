@@ -4,7 +4,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import admin, { ServiceAccount } from 'firebase-admin';
 import { initializeApp } from 'firebase/app';
-import serviceAccount from '../constalent-sdk.json';
 import { AppModule } from './app.module';
 import { env } from './shared/config/env';
 import { ErrorResponseFilter } from './shared/filters/error-response.filter';
@@ -21,7 +20,9 @@ async function bootstrap() {
   initializeApp(firebaseConfig);
 
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount as ServiceAccount),
+    credential: admin.credential.cert(
+      JSON.parse(env.firebaseJsonSdk) as ServiceAccount,
+    ),
     storageBucket: env.firebaseStorageBucket,
   });
 
