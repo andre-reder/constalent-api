@@ -175,7 +175,7 @@ model vacancies {
   otherBenefits                      String?
   minExperience                      Int?
   desirableExperience                Int?
-  necessaryRequirements              String
+  necessaryRequirements              String?
   desirableRequirements              String?
   willApplicantBeTested              Boolean         @default(false)
   alignmentMeetingDate               DateTime?

@@ -67,7 +67,7 @@ Table vacancies {
   otherBenefits String
   minExperience Int
   desirableExperience Int
-  necessaryRequirements String [not null]
+  necessaryRequirements String
   desirableRequirements String
   willApplicantBeTested Boolean [not null, default: false]
   alignmentMeetingDate DateTime

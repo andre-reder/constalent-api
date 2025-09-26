@@ -196,8 +196,8 @@ export class CreateVacancyDto {
   desirableExperience?: number;
 
   @IsString()
-  @IsNotEmpty()
-  necessaryRequirements: string;
+  @IsOptional()
+  necessaryRequirements?: string;
 
   @IsOptional()
   @IsString()
